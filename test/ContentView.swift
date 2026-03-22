@@ -652,6 +652,46 @@ struct DurationSelectionView: View {
     }
 }
 
+/// Full-screen session: live countdown and Finish; audio is driven by `SoundscapePlayer`.
+private struct ActiveSessionView: View {
+    @ObservedObject var player: SoundscapePlayer
+
+    var body: some View {
+        VStack(spacing: 32) {
+            Spacer(minLength: 0)
+
+            Text(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
+                .font(.system(size: 48, weight: .medium, design: .monospaced))
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .foregroundStyle(.primary)
+                .accessibilityLabel("Time remaining")
+                .accessibilityValue(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
+
+            Spacer(minLength: 0)
+
+            Button("Finish", role: .destructive) {
+                player.finish()
+            }
+            .font(.body.weight(.semibold))
+            .buttonStyle(.borderedProminent)
+            .tint(.red.opacity(0.85))
+            .padding(.bottom, 8)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle("Session")
+#if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+#endif
+        .onDisappear {
+            if player.sessionActive || player.isPlaying {
+                player.finish()
+            }
+        }
+    }
+}
+
 struct SoundscapeSelectionView: View {
     let files: [String]
     @Binding var selectedFileName: String
@@ -716,6 +756,7 @@ struct ContentView: View {
     @AppStorage("sessionDurationSeconds") private var sessionDurationSeconds: Int = 180
     @State private var showSoundscapePicker = false
     @State private var showDurationPicker = false
+    @State private var showActiveSession = false
 
     private var soundscapeFiles: [String] {
         SoundscapeCatalog.bundledSoundscapeFileNames()
@@ -803,31 +844,27 @@ struct ContentView: View {
                         .accessibilityHint("Opens screen to set session length")
                     }
 
-                    Text(timerDisplayText)
-                        .font(.system(.title3, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel("Session timer")
-                        .accessibilityValue(timerDisplayText)
+                    if !showActiveSession {
+                        Text(timerDisplayText)
+                            .font(.system(.title3, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Session timer")
+                            .accessibilityValue(timerDisplayText)
 
-                    Button {
-                        audio.toggle()
-                    } label: {
-                        Label(
-                            audio.isPlaying ? "Pause" : "Play",
-                            systemImage: audio.isPlaying ? "pause.circle.fill" : "play.circle.fill"
-                        )
-                        .font(.system(size: 56))
-                        .labelStyle(.iconOnly)
-                    }
-                    .buttonStyle(.borderless)
-
-                    if audio.isPlaying || audio.sessionActive {
-                        Button("Finish", role: .destructive) {
-                            audio.finish()
+                        Button {
+                            guard SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil else { return }
+                            audio.configureSessionDuration(sessionDurationSeconds)
+                            audio.toggle()
+                            if audio.sessionActive {
+                                showActiveSession = true
+                            }
+                        } label: {
+                            Label("Play", systemImage: "play.circle.fill")
+                                .font(.system(size: 56))
+                                .labelStyle(.iconOnly)
                         }
-                        .font(.body.weight(.medium))
-                        .buttonStyle(.borderedProminent)
-                        .tint(.red.opacity(0.8))
+                        .buttonStyle(.borderless)
+                        .disabled(audio.isPlaying || audio.sessionActive)
                     }
                 }
             }
@@ -843,6 +880,14 @@ struct ContentView: View {
             }
             .navigationDestination(isPresented: $showDurationPicker) {
                 DurationSelectionView(durationSeconds: $sessionDurationSeconds)
+            }
+            .navigationDestination(isPresented: $showActiveSession) {
+                ActiveSessionView(player: audio)
+            }
+            .onChange(of: audio.sessionActive) { _, active in
+                if !active {
+                    showActiveSession = false
+                }
             }
             .onAppear {
                 syncSelectionWithCatalog()
