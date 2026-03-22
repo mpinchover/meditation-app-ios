@@ -242,19 +242,19 @@ struct HomeScreen: View {
     private func syncBellSelectionWithCatalog() {
         let files = bellFiles
         guard !files.isEmpty else {
-            startingBellFile = ""
-            endingBellFile = ""
-            intervalBellFile = ""
+            if !startingBellFile.isEmpty { startingBellFile = "" }
+            if !endingBellFile.isEmpty { endingBellFile = "" }
+            if !intervalBellFile.isEmpty { intervalBellFile = "" }
             return
         }
-        if startingBellFile.isEmpty || !files.contains(startingBellFile) {
-            startingBellFile = files[0]
+        if !startingBellFile.isEmpty && !files.contains(startingBellFile) {
+            startingBellFile = ""
         }
-        if endingBellFile.isEmpty || !files.contains(endingBellFile) {
-            endingBellFile = files[0]
+        if !endingBellFile.isEmpty && !files.contains(endingBellFile) {
+            endingBellFile = ""
         }
-        if intervalBellFile.isEmpty || !files.contains(intervalBellFile) {
-            intervalBellFile = files[0]
+        if !intervalBellFile.isEmpty && !files.contains(intervalBellFile) {
+            intervalBellFile = ""
         }
         if intervalBellMinutes < 1 { intervalBellMinutes = 1 }
         if intervalBellMinutes > 30 { intervalBellMinutes = 30 }

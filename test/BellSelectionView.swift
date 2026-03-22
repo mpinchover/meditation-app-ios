@@ -49,38 +49,72 @@ private struct BellPickerList: View {
     }
 
     var body: some View {
-        Group {
+        List {
+            Section {
+                noBellRow()
+            }
             if files.isEmpty {
-                ContentUnavailableView(
-                    "No bells",
-                    systemImage: "bell.slash",
-                    description: Text("Add WAV or MP3 files to the target and ensure the names include “bell” or “gong”. Xcode often copies them into the bundle without the assets/bells folder.")
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Section {
+                    Text("Add WAV or MP3 files to the target (names should include “bell” or “gong”).")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                }
             } else {
-                List {
-                    ForEach(sections, id: \.title) { section in
-                        Section {
-                            ForEach(section.files, id: \.self) { file in
-                                bellRow(file: file)
-                            }
-                        } header: {
-                            Text(section.title)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .textCase(nil)
+                ForEach(sections, id: \.title) { section in
+                    Section {
+                        ForEach(section.files, id: \.self) { file in
+                            bellRow(file: file)
                         }
+                    } header: {
+                        Text(section.title)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .textCase(nil)
                     }
                 }
-#if os(iOS) || os(tvOS) || os(visionOS)
-                .listStyle(.insetGrouped)
-#else
-                .listStyle(.inset)
-#endif
-                .environment(\.defaultMinListRowHeight, 48)
-                .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
             }
         }
+#if os(iOS) || os(tvOS) || os(visionOS)
+        .listStyle(.insetGrouped)
+#else
+        .listStyle(.inset)
+#endif
+        .environment(\.defaultMinListRowHeight, 48)
+        .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
+    }
+
+    @ViewBuilder
+    private func noBellRow() -> some View {
+        let isSelected = draftFileName.isEmpty
+        Button {
+            draftFileName = ""
+            preview.stop()
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Text("No bell")
+                    .font(.body)
+                    .fontWeight(isSelected ? .medium : .regular)
+                    .foregroundStyle(titleStyle(selected: isSelected))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Color.clear.frame(width: 32, height: 32)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+        .listRowBackground(
+            Group {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 0)
+                        .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.14))
+                } else {
+                    Color.clear
+                }
+            }
+        )
     }
 
     @ViewBuilder
@@ -161,7 +195,6 @@ struct BellSelectionView: View {
                         preview.stop()
                         dismiss()
                     }
-                    .disabled(files.isEmpty)
                 }
             }
             .onAppear {
@@ -193,28 +226,27 @@ struct IntervalBellSelectionView: View {
     var body: some View {
         BellPickerList(files: files, draftFileName: $draftFileName, preview: preview)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                VStack(alignment: .leading, spacing: 10) {
-                   
-                    HStack(spacing: 12) {
-                        
-                        Slider(
-                            value: Binding(
-                                get: { Double(intervalMinutes) },
-                                set: { intervalMinutes = min(30, max(1, Int($0.rounded()))) }
-                            ),
-                            in: 1...30,
-                            step: 1
-                        )
-                       
+                if !draftFileName.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 12) {
+                            Slider(
+                                value: Binding(
+                                    get: { Double(intervalMinutes) },
+                                    set: { intervalMinutes = min(30, max(1, Int($0.rounded()))) }
+                                ),
+                                in: 1...30,
+                                step: 1
+                            )
+                        }
+                        Text("Every \(intervalMinutes) minutes")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.primary)
                     }
-                    Text("Every \(intervalMinutes) minutes")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.bar)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.bar)
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -223,7 +255,6 @@ struct IntervalBellSelectionView: View {
                         preview.stop()
                         dismiss()
                     }
-                    .disabled(files.isEmpty)
                 }
             }
             .onAppear {
