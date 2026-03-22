@@ -10,7 +10,10 @@ import SwiftUI
 struct HomeScreen: View {
     @StateObject private var audio = SoundscapePlayer()
     @AppStorage("selectedSoundscapeFile") private var selectedSoundscapeFile = ""
-    @AppStorage("selectedBellFile") private var selectedBellFile = ""
+    @AppStorage("startingBellFile") private var startingBellFile = ""
+    @AppStorage("endingBellFile") private var endingBellFile = ""
+    @AppStorage("intervalBellFile") private var intervalBellFile = ""
+    @AppStorage("intervalBellMinutes") private var intervalBellMinutes: Int = 5
     @AppStorage("sessionDurationSeconds") private var sessionDurationSeconds: Int = 180
     @State private var showSoundscapePicker = false
     @State private var showBellPicker = false
@@ -188,7 +191,13 @@ struct HomeScreen: View {
                 SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)
             }
             .navigationDestination(isPresented: $showBellPicker) {
-                BellSelectionView(files: bellFiles, selectedFileName: $selectedBellFile)
+                BellMenuView(
+                    bellFiles: bellFiles,
+                    startingBellFile: $startingBellFile,
+                    endingBellFile: $endingBellFile,
+                    intervalBellFile: $intervalBellFile,
+                    intervalBellMinutes: $intervalBellMinutes
+                )
             }
             .navigationDestination(isPresented: $showDurationPicker) {
                 DurationSelectionView(durationSeconds: $sessionDurationSeconds)
@@ -233,12 +242,22 @@ struct HomeScreen: View {
     private func syncBellSelectionWithCatalog() {
         let files = bellFiles
         guard !files.isEmpty else {
-            selectedBellFile = ""
+            startingBellFile = ""
+            endingBellFile = ""
+            intervalBellFile = ""
             return
         }
-        if selectedBellFile.isEmpty || !files.contains(selectedBellFile) {
-            selectedBellFile = files[0]
+        if startingBellFile.isEmpty || !files.contains(startingBellFile) {
+            startingBellFile = files[0]
         }
+        if endingBellFile.isEmpty || !files.contains(endingBellFile) {
+            endingBellFile = files[0]
+        }
+        if intervalBellFile.isEmpty || !files.contains(intervalBellFile) {
+            intervalBellFile = files[0]
+        }
+        if intervalBellMinutes < 1 { intervalBellMinutes = 1 }
+        if intervalBellMinutes > 30 { intervalBellMinutes = 30 }
     }
 }
 

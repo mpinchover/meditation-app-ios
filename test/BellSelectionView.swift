@@ -8,7 +8,7 @@
 import AVFoundation
 import SwiftUI
 
-private final class BellPreviewPlayer: ObservableObject {
+final class BellPreviewPlayer: ObservableObject {
     @Published private(set) var playingFileName: String?
 
     private var player: AVAudioPlayer?
@@ -36,19 +36,13 @@ private final class BellPreviewPlayer: ObservableObject {
     }
 }
 
-struct BellSelectionView: View {
-    let files: [String]
-    @Binding var selectedFileName: String
-    @State private var draftFileName: String
-    @StateObject private var preview = BellPreviewPlayer()
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
+// MARK: - Shared list
 
-    init(files: [String], selectedFileName: Binding<String>) {
-        self.files = files
-        self._selectedFileName = selectedFileName
-        _draftFileName = State(initialValue: selectedFileName.wrappedValue)
-    }
+private struct BellPickerList: View {
+    let files: [String]
+    @Binding var draftFileName: String
+    @ObservedObject var preview: BellPreviewPlayer
+    @Environment(\.colorScheme) private var colorScheme
 
     private var sections: [(title: String, files: [String])] {
         BellsCatalog.groupedBellSections(files: files)
@@ -86,22 +80,6 @@ struct BellSelectionView: View {
                 .environment(\.defaultMinListRowHeight, 48)
                 .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
             }
-        }
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    selectedFileName = draftFileName
-                    preview.stop()
-                    dismiss()
-                }
-                .disabled(files.isEmpty)
-            }
-        }
-        .onAppear {
-            draftFileName = selectedFileName
-        }
-        .onDisappear {
-            preview.stop()
         }
     }
 
@@ -156,5 +134,105 @@ struct BellSelectionView: View {
             return AnyShapeStyle(Color.accentColor)
         }
         return AnyShapeStyle(Color.primary.opacity(0.62))
+    }
+}
+
+// MARK: - Starting / ending bell
+
+struct BellSelectionView: View {
+    let files: [String]
+    @Binding var selectedFileName: String
+    @State private var draftFileName: String
+    @StateObject private var preview = BellPreviewPlayer()
+    @Environment(\.dismiss) private var dismiss
+
+    init(files: [String], selectedFileName: Binding<String>) {
+        self.files = files
+        self._selectedFileName = selectedFileName
+        _draftFileName = State(initialValue: selectedFileName.wrappedValue)
+    }
+
+    var body: some View {
+        BellPickerList(files: files, draftFileName: $draftFileName, preview: preview)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        selectedFileName = draftFileName
+                        preview.stop()
+                        dismiss()
+                    }
+                    .disabled(files.isEmpty)
+                }
+            }
+            .onAppear {
+                draftFileName = selectedFileName
+            }
+            .onDisappear {
+                preview.stop()
+            }
+    }
+}
+
+// MARK: - Interval bell (catalog + minutes)
+
+struct IntervalBellSelectionView: View {
+    let files: [String]
+    @Binding var selectedFileName: String
+    @Binding var intervalMinutes: Int
+    @State private var draftFileName: String
+    @StateObject private var preview = BellPreviewPlayer()
+    @Environment(\.dismiss) private var dismiss
+
+    init(files: [String], selectedFileName: Binding<String>, intervalMinutes: Binding<Int>) {
+        self.files = files
+        self._selectedFileName = selectedFileName
+        self._intervalMinutes = intervalMinutes
+        _draftFileName = State(initialValue: selectedFileName.wrappedValue)
+    }
+
+    var body: some View {
+        BellPickerList(files: files, draftFileName: $draftFileName, preview: preview)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(alignment: .leading, spacing: 10) {
+                   
+                    HStack(spacing: 12) {
+                        
+                        Slider(
+                            value: Binding(
+                                get: { Double(intervalMinutes) },
+                                set: { intervalMinutes = min(30, max(1, Int($0.rounded()))) }
+                            ),
+                            in: 1...30,
+                            step: 1
+                        )
+                       
+                    }
+                    Text("Every \(intervalMinutes) minutes")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.bar)
+            }
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        selectedFileName = draftFileName
+                        preview.stop()
+                        dismiss()
+                    }
+                    .disabled(files.isEmpty)
+                }
+            }
+            .onAppear {
+                draftFileName = selectedFileName
+                if intervalMinutes < 1 { intervalMinutes = 1 }
+                if intervalMinutes > 30 { intervalMinutes = 30 }
+            }
+            .onDisappear {
+                preview.stop()
+            }
     }
 }
