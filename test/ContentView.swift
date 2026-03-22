@@ -12,14 +12,7 @@ private enum PlayerSlot {
     case a, b
 }
 
-private final class CrossfadeLoopDelegate: NSObject, AVAudioPlayerDelegate {
-    weak var owner: AlphaWavesPlayer?
-
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        owner?.handlePlayerFinished(player)
-    }
-}
-
+/// Crossfades using one `AVAudioEngine` graph so both streams sum in a single stereo path (cleaner imaging than two `AVAudioPlayer`s).
 private final class AlphaWavesPlayer: ObservableObject {
     @Published private(set) var isPlaying = false
     /// Seconds left in the 3-minute session; updates while playing.
@@ -29,8 +22,14 @@ private final class AlphaWavesPlayer: ObservableObject {
     private static let crossfadeLeadSeconds = 5.0
     private static let sessionDurationSeconds = 3 * 60
 
-    private var playerA: AVAudioPlayer?
-    private var playerB: AVAudioPlayer?
+    private var engine: AVAudioEngine?
+    private var fileA: AVAudioFile?
+    private var fileB: AVAudioFile?
+    private var nodeA: AVAudioPlayerNode?
+    private var nodeB: AVAudioPlayerNode?
+    private var mixerA: AVAudioMixerNode?
+    private var mixerB: AVAudioMixerNode?
+
     /// The track whose tail overlaps the next pass (fade-out over the other’s fade-in).
     private var primary: PlayerSlot = .a
 
@@ -39,18 +38,15 @@ private final class AlphaWavesPlayer: ObservableObject {
     private var resumeA = false
     private var resumeB = false
 
-    private let loopDelegate = CrossfadeLoopDelegate()
-
     init() {
         countdownSecondsRemaining = Self.sessionDurationSeconds
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-        configureAudioSessionForSimultaneousPlayback()
+        configureAudioSessionForPlayback()
 #endif
     }
 
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-    /// Single shared session; both players mix on the session output without exclusive locking.
-    private func configureAudioSessionForSimultaneousPlayback() {
+    private func configureAudioSessionForPlayback() {
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(
@@ -66,10 +62,11 @@ private final class AlphaWavesPlayer: ObservableObject {
     deinit {
         pollTimer?.invalidate()
         countdownTimer?.invalidate()
+        engine?.stop()
     }
 
     func toggle() {
-        ensurePlayers()
+        ensureEngine()
         if isPlaying {
             pausePlayback()
         } else {
@@ -77,36 +74,75 @@ private final class AlphaWavesPlayer: ObservableObject {
         }
     }
 
-    fileprivate func handlePlayerFinished(_ player: AVAudioPlayer) {
-        if player === playerA {
-            primary = .b
-            playerA?.currentTime = 0
-        } else if player === playerB {
-            primary = .a
-            playerB?.currentTime = 0
+    private func handleNodeFinished(slot: PlayerSlot) {
+        if slot == primary {
+            primary = (slot == .a) ? .b : .a
         }
     }
 
-    private func ensurePlayers() {
-        guard playerA == nil else { return }
+    private func ensureEngine() {
+        guard engine == nil else { return }
         guard let url = Bundle.main.url(forResource: "Alpha Waves", withExtension: "mp3") else { return }
         do {
-            let a = try AVAudioPlayer(contentsOf: url)
-            let b = try AVAudioPlayer(contentsOf: url)
-            a.numberOfLoops = 0
-            b.numberOfLoops = 0
-            loopDelegate.owner = self
-            a.delegate = loopDelegate
-            b.delegate = loopDelegate
-            a.prepareToPlay()
-            b.prepareToPlay()
-            playerA = a
-            playerB = b
+            let fa = try AVAudioFile(forReading: url)
+            let fb = try AVAudioFile(forReading: url)
+            let na = AVAudioPlayerNode()
+            let nb = AVAudioPlayerNode()
+            let ma = AVAudioMixerNode()
+            let mb = AVAudioMixerNode()
+            let eng = AVAudioEngine()
+            let format = fa.processingFormat
+
+            eng.attach(na)
+            eng.attach(nb)
+            eng.attach(ma)
+            eng.attach(mb)
+            eng.connect(na, to: ma, format: format)
+            eng.connect(nb, to: mb, format: format)
+            eng.connect(ma, to: eng.mainMixerNode, format: format)
+            eng.connect(mb, to: eng.mainMixerNode, format: format)
+
+            fileA = fa
+            fileB = fb
+            nodeA = na
+            nodeB = nb
+            mixerA = ma
+            mixerB = mb
+            engine = eng
         } catch { }
     }
 
+    private func node(for slot: PlayerSlot) -> AVAudioPlayerNode? {
+        switch slot {
+        case .a: return nodeA
+        case .b: return nodeB
+        }
+    }
+
+    private func file(for slot: PlayerSlot) -> AVAudioFile? {
+        switch slot {
+        case .a: return fileA
+        case .b: return fileB
+        }
+    }
+
+    private func duration(of file: AVAudioFile) -> Double {
+        Double(file.length) / file.fileFormat.sampleRate
+    }
+
+    private func remainingSeconds(primarySlot: PlayerSlot) -> Double? {
+        guard let n = node(for: primarySlot),
+              let f = file(for: primarySlot),
+              n.isPlaying,
+              let last = n.lastRenderTime,
+              let pt = n.playerTime(forNodeTime: last) else { return nil }
+        let elapsed = Double(pt.sampleTime) / pt.sampleRate
+        let total = duration(of: f)
+        return max(0, total - elapsed)
+    }
+
     private func startPlayback() {
-        guard playerA != nil else { return }
+        guard engine != nil else { return }
         if resumeA || resumeB {
             resumeFromPause()
         } else {
@@ -115,25 +151,47 @@ private final class AlphaWavesPlayer: ObservableObject {
     }
 
     private func startFromStopped() {
-        guard let a = playerA else { return }
+        guard let na = nodeA, let nb = nodeB, let eng = engine else { return }
         countdownSecondsRemaining = Self.sessionDurationSeconds
         resumeA = true
         resumeB = false
         primary = .a
-        a.currentTime = 0
-        playerB?.stop()
-        playerB?.currentTime = 0
-        a.play()
+
+        na.stop()
+        nb.stop()
+
+        do {
+            if !eng.isRunning {
+                try eng.start()
+            }
+        } catch {
+            return
+        }
+
+        scheduleFullFile(on: .a) { [weak self] in
+            self?.handleNodeFinished(slot: .a)
+        }
         isPlaying = true
         startPolling()
         startCountdownTimer()
     }
 
+    /// Schedules one pass through the file (no looping on the node — handoff logic repeats).
+    private func scheduleFullFile(on slot: PlayerSlot, completion: @escaping () -> Void) {
+        guard let n = node(for: slot), let f = file(for: slot) else { return }
+        n.scheduleFile(f, at: nil) { [weak self] in
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
+        n.play()
+    }
+
     private func pausePlayback() {
-        resumeA = playerA?.isPlaying ?? false
-        resumeB = playerB?.isPlaying ?? false
-        playerA?.pause()
-        playerB?.pause()
+        resumeA = nodeA?.isPlaying ?? false
+        resumeB = nodeB?.isPlaying ?? false
+        nodeA?.pause()
+        nodeB?.pause()
         pollTimer?.invalidate()
         pollTimer = nil
         stopCountdownTimer()
@@ -141,8 +199,11 @@ private final class AlphaWavesPlayer: ObservableObject {
     }
 
     private func resumeFromPause() {
-        if resumeA { playerA?.play() }
-        if resumeB { playerB?.play() }
+        if let eng = engine, !eng.isRunning {
+            try? eng.start()
+        }
+        if resumeA { nodeA?.play() }
+        if resumeB { nodeB?.play() }
         if resumeA || resumeB {
             isPlaying = true
             startPolling()
@@ -184,29 +245,24 @@ private final class AlphaWavesPlayer: ObservableObject {
         pollTimer = t
     }
 
-    private func primaryPlayer() -> AVAudioPlayer? {
-        switch primary {
-        case .a: return playerA
-        case .b: return playerB
-        }
-    }
-
-    private func secondaryPlayer() -> AVAudioPlayer? {
-        switch primary {
-        case .a: return playerB
-        case .b: return playerA
-        }
+    private func secondarySlot() -> PlayerSlot {
+        primary == .a ? .b : .a
     }
 
     private func pollCrossfade() {
         guard isPlaying else { return }
+
         let threshold = Self.crossfadeLeadSeconds
-        guard let lead = primaryPlayer(), lead.isPlaying else { return }
-        let remaining = max(0, lead.duration - lead.currentTime)
+        guard let remaining = remainingSeconds(primarySlot: primary) else { return }
         guard remaining <= threshold else { return }
-        guard let other = secondaryPlayer(), !other.isPlaying else { return }
-        other.currentTime = 0
-        other.play()
+
+        let other = secondarySlot()
+        guard let sn = node(for: other), !sn.isPlaying else { return }
+
+        sn.stop()
+        scheduleFullFile(on: other) { [weak self] in
+            self?.handleNodeFinished(slot: other)
+        }
     }
 }
 
