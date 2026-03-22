@@ -1,0 +1,160 @@
+//
+//  BellSelectionView.swift
+//  test
+//
+//  Created by Matt Pinchover on 3/21/26.
+//
+
+import AVFoundation
+import SwiftUI
+
+private final class BellPreviewPlayer: ObservableObject {
+    @Published private(set) var playingFileName: String?
+
+    private var player: AVAudioPlayer?
+
+    func play(fileName: String) {
+        stop()
+        guard let url = BellsCatalog.urlInBundle(fileName: fileName) else { return }
+        do {
+            let p = try AVAudioPlayer(contentsOf: url)
+            p.numberOfLoops = 0
+#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try? AVAudioSession.sharedInstance().setActive(true)
+#endif
+            p.play()
+            player = p
+            playingFileName = fileName
+        } catch { }
+    }
+
+    func stop() {
+        player?.stop()
+        player = nil
+        playingFileName = nil
+    }
+}
+
+struct BellSelectionView: View {
+    let files: [String]
+    @Binding var selectedFileName: String
+    @State private var draftFileName: String
+    @StateObject private var preview = BellPreviewPlayer()
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+
+    init(files: [String], selectedFileName: Binding<String>) {
+        self.files = files
+        self._selectedFileName = selectedFileName
+        _draftFileName = State(initialValue: selectedFileName.wrappedValue)
+    }
+
+    private var sections: [(title: String, files: [String])] {
+        BellsCatalog.groupedBellSections(files: files)
+    }
+
+    var body: some View {
+        Group {
+            if files.isEmpty {
+                ContentUnavailableView(
+                    "No bells",
+                    systemImage: "bell.slash",
+                    description: Text("Add WAV or MP3 files to the target and ensure the names include “bell” or “gong”. Xcode often copies them into the bundle without the assets/bells folder.")
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(sections, id: \.title) { section in
+                        Section {
+                            ForEach(section.files, id: \.self) { file in
+                                bellRow(file: file)
+                            }
+                        } header: {
+                            Text(section.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .textCase(nil)
+                        }
+                    }
+                }
+#if os(iOS) || os(tvOS) || os(visionOS)
+                .listStyle(.insetGrouped)
+#else
+                .listStyle(.inset)
+#endif
+                .environment(\.defaultMinListRowHeight, 48)
+                .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    selectedFileName = draftFileName
+                    preview.stop()
+                    dismiss()
+                }
+                .disabled(files.isEmpty)
+            }
+        }
+        .onAppear {
+            draftFileName = selectedFileName
+        }
+        .onDisappear {
+            preview.stop()
+        }
+    }
+
+    @ViewBuilder
+    private func bellRow(file: String) -> some View {
+        let isSelected = draftFileName == file
+        let isPlaying = preview.playingFileName == file
+        Button {
+            draftFileName = file
+            preview.play(fileName: file)
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Text(BellsCatalog.displayTitle(fileName: file))
+                    .font(.body)
+                    .fontWeight(isPlaying ? .semibold : (isSelected ? .medium : .regular))
+                    .foregroundStyle(titleStyle(selected: isSelected))
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack(alignment: .trailing) {
+                    Color.clear.frame(width: 32, height: 32)
+                    if isPlaying {
+                        Image(systemName: "waveform")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Color.accentColor)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                }
+                .accessibilityHidden(!isPlaying)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+        .listRowBackground(
+            Group {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 0)
+                        .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.14))
+                } else {
+                    Color.clear
+                }
+            }
+        )
+    }
+
+    private func titleStyle(selected: Bool) -> AnyShapeStyle {
+        if selected {
+            return AnyShapeStyle(Color.accentColor)
+        }
+        return AnyShapeStyle(Color.primary.opacity(0.62))
+    }
+}

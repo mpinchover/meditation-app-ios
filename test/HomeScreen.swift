@@ -10,8 +10,10 @@ import SwiftUI
 struct HomeScreen: View {
     @StateObject private var audio = SoundscapePlayer()
     @AppStorage("selectedSoundscapeFile") private var selectedSoundscapeFile = ""
+    @AppStorage("selectedBellFile") private var selectedBellFile = ""
     @AppStorage("sessionDurationSeconds") private var sessionDurationSeconds: Int = 180
     @State private var showSoundscapePicker = false
+    @State private var showBellPicker = false
     @State private var showDurationPicker = false
     @State private var showActiveSession = false
 
@@ -22,6 +24,10 @@ struct HomeScreen: View {
 
     private var soundscapeFiles: [String] {
         SoundscapeCatalog.bundledSoundscapeFileNames()
+    }
+
+    private var bellFiles: [String] {
+        BellsCatalog.bundledBellFileNames()
     }
 
     private var selectedTitle: String {
@@ -143,8 +149,8 @@ struct HomeScreen: View {
                             .buttonStyle(.borderless)
                             .disabled(audio.isPlaying || audio.sessionActive)
                             .position(x: playCenterX, y: h / 2)
-                            Menu {
-                                Button("Settings", action: {})
+                            Button {
+                                showBellPicker = true
                             } label: {
                                 Image(systemName: "line.3.horizontal")
                                     .font(.system(size: 22, weight: .medium))
@@ -153,7 +159,8 @@ struct HomeScreen: View {
                             .buttonStyle(.borderless)
                             .frame(width: Self.menuButtonTapSize, height: Self.menuButtonTapSize)
                             .contentShape(Rectangle())
-                            .accessibilityLabel("Menu")
+                            .accessibilityLabel("Bells")
+                            .accessibilityHint("Opens bell sounds")
                             .position(x: menuCenterX, y: h / 2)
                         }
                         .frame(width: w, height: h)
@@ -180,6 +187,9 @@ struct HomeScreen: View {
             .navigationDestination(isPresented: $showSoundscapePicker) {
                 SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)
             }
+            .navigationDestination(isPresented: $showBellPicker) {
+                BellSelectionView(files: bellFiles, selectedFileName: $selectedBellFile)
+            }
             .navigationDestination(isPresented: $showDurationPicker) {
                 DurationSelectionView(durationSeconds: $sessionDurationSeconds)
             }
@@ -193,6 +203,7 @@ struct HomeScreen: View {
             }
             .onAppear {
                 syncSelectionWithCatalog()
+                syncBellSelectionWithCatalog()
                 audio.configureSessionDuration(sessionDurationSeconds)
                 if SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil {
                     audio.applySoundscape(fileName: selectedSoundscapeFile)
@@ -216,6 +227,17 @@ struct HomeScreen: View {
         }
         if selectedSoundscapeFile.isEmpty || !files.contains(selectedSoundscapeFile) {
             selectedSoundscapeFile = files[0]
+        }
+    }
+
+    private func syncBellSelectionWithCatalog() {
+        let files = bellFiles
+        guard !files.isEmpty else {
+            selectedBellFile = ""
+            return
+        }
+        if selectedBellFile.isEmpty || !files.contains(selectedBellFile) {
+            selectedBellFile = files[0]
         }
     }
 }
