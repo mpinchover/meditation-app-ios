@@ -7,21 +7,35 @@
 
 import SwiftUI
 
-/// Full-screen session: live countdown and Finish; audio is driven by `SoundscapePlayer`.
+/// Full-screen session: countdown, optional bells, then soundscape continues until Finish.
 struct ActiveSessionView: View {
     @ObservedObject var player: SoundscapePlayer
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 24) {
             Spacer(minLength: 0)
+
+            if player.countdownFinished {
+                Text("Session complete")
+                    .font(.title3.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
 
             Text(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
                 .font(.system(size: 48, weight: .medium, design: .monospaced))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .foregroundStyle(.primary)
-                .accessibilityLabel("Time remaining")
+                .accessibilityLabel(player.countdownFinished ? "Time remaining, session complete" : "Time remaining")
                 .accessibilityValue(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
+
+            if player.countdownFinished {
+                Text("Soundscape continues until you finish.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
 
             Spacer(minLength: 0)
 

@@ -140,6 +140,7 @@ struct HomeScreen: View {
                             Button {
                                 guard SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil else { return }
                                 audio.configureSessionDuration(sessionDurationSeconds)
+                                attachSessionBellHandlers()
                                 audio.toggle()
                                 if audio.sessionActive {
                                     showActiveSession = true
@@ -258,6 +259,33 @@ struct HomeScreen: View {
         }
         if intervalBellMinutes < 1 { intervalBellMinutes = 1 }
         if intervalBellMinutes > 30 { intervalBellMinutes = 30 }
+    }
+
+    /// Wires one-shot bells for this session. Interval chimes never fire on the final tick (`remaining == 0`); the ending bell plays there if selected, so they do not overlap.
+    private func attachSessionBellHandlers() {
+        let start = startingBellFile
+        let end = endingBellFile
+        let interval = intervalBellFile
+        let minutes = intervalBellMinutes
+
+        audio.onSessionStarted = {
+            if !start.isEmpty {
+                SessionBellPlayback.play(fileName: start)
+            }
+        }
+        audio.onCountdownTick = { remaining, total in
+            guard remaining > 0 else { return }
+            guard !interval.isEmpty else { return }
+            let intervalSec = max(1, minutes) * 60
+            let elapsed = total - remaining
+            guard elapsed > 0, intervalSec > 0, elapsed.isMultiple(of: intervalSec) else { return }
+            SessionBellPlayback.play(fileName: interval)
+        }
+        audio.onNaturalCountdownComplete = {
+            if !end.isEmpty {
+                SessionBellPlayback.play(fileName: end)
+            }
+        }
     }
 }
 

@@ -14,9 +14,18 @@ fileprivate enum PlayerSlot {
 
 final class SoundscapePlayer: ObservableObject {
     @Published private(set) var isPlaying = false
-    /// True after Play starts until Finish or countdown reaches zero.
+    /// True after Play starts until the user finishes (including after the countdown hits zero while soundscape keeps playing).
     @Published private(set) var sessionActive = false
     @Published private(set) var sessionRemainingSeconds: Int = 0
+    /// True once the session timer reaches zero; soundscape keeps playing until `finish()`.
+    @Published private(set) var countdownFinished = false
+
+    /// Session length in seconds (what was configured when playback started).
+    private(set) var sessionDurationSeconds: Int = 180
+
+    var onSessionStarted: (() -> Void)?
+    var onCountdownTick: ((_ remaining: Int, _ total: Int) -> Void)?
+    var onNaturalCountdownComplete: (() -> Void)?
 
     private static let crossfadeLeadSeconds = 10.0
     private var sessionTotalSeconds: Int = 180
@@ -71,6 +80,7 @@ final class SoundscapePlayer: ObservableObject {
     func configureSessionDuration(_ totalSeconds: Int) {
         guard !isPlaying, !sessionActive else { return }
         sessionTotalSeconds = max(60, totalSeconds)
+        sessionDurationSeconds = sessionTotalSeconds
     }
 
     func toggle() {
@@ -83,10 +93,14 @@ final class SoundscapePlayer: ObservableObject {
     }
 
     func finish() {
+        onSessionStarted = nil
+        onCountdownTick = nil
+        onNaturalCountdownComplete = nil
         tearDownEngine()
         sessionRemainingSeconds = 0
         sessionActive = false
         isPlaying = false
+        countdownFinished = false
     }
 
     private func handleNodeFinished(slot: PlayerSlot) {
@@ -179,7 +193,9 @@ final class SoundscapePlayer: ObservableObject {
         primary = .a
 
         sessionRemainingSeconds = sessionTotalSeconds
+        sessionDurationSeconds = sessionTotalSeconds
         sessionActive = true
+        countdownFinished = false
 
         na.stop()
         nb.stop()
@@ -199,6 +215,7 @@ final class SoundscapePlayer: ObservableObject {
         isPlaying = true
         startPolling()
         startSessionCountdownTimer()
+        onSessionStarted?()
     }
 
     private func scheduleFullFile(on slot: PlayerSlot, completion: @escaping () -> Void) {
@@ -240,23 +257,38 @@ final class SoundscapePlayer: ObservableObject {
         if resumeA || resumeB {
             isPlaying = true
             startPolling()
-            startSessionCountdownTimer()
+            if !countdownFinished, sessionRemainingSeconds > 0 {
+                startSessionCountdownTimer()
+            }
         }
     }
 
     private func startSessionCountdownTimer() {
         stopSessionCountdownTimer()
+        guard !countdownFinished else { return }
         let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             guard let self, self.isPlaying else { return }
+            if self.countdownFinished { return }
+
             if self.sessionRemainingSeconds > 0 {
                 self.sessionRemainingSeconds -= 1
             }
+            self.onCountdownTick?(self.sessionRemainingSeconds, self.sessionTotalSeconds)
+
             if self.sessionRemainingSeconds <= 0 {
-                self.finish()
+                self.completeNaturalCountdown()
             }
         }
         RunLoop.main.add(t, forMode: .common)
         elapsedTimer = t
+    }
+
+    private func completeNaturalCountdown() {
+        guard !countdownFinished else { return }
+        countdownFinished = true
+        sessionRemainingSeconds = 0
+        stopSessionCountdownTimer()
+        onNaturalCountdownComplete?()
     }
 
     private func stopSessionCountdownTimer() {
