@@ -17,6 +17,8 @@ struct HomeScreen: View {
 
     /// Bottom inset for the play control as a fraction of home layout height (tuned so ~50pt at 812pt reference).
     private static let homePlayBottomInsetHeightFraction: CGFloat = 50.0 / 812.0
+    private static let playButtonIconSize: CGFloat = 88
+    private static let menuButtonTapSize: CGFloat = 44
 
     private var soundscapeFiles: [String] {
         SoundscapeCatalog.bundledSoundscapeFileNames()
@@ -116,20 +118,47 @@ struct HomeScreen: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if !showActiveSession {
-                    Button {
-                        guard SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil else { return }
-                        audio.configureSessionDuration(sessionDurationSeconds)
-                        audio.toggle()
-                        if audio.sessionActive {
-                            showActiveSession = true
+                    GeometryReader { barGeo in
+                        let w = barGeo.size.width
+                        let h = max(barGeo.size.height, Self.playButtonIconSize)
+                        let playCenterX = w / 2
+                        let playTrailingX = playCenterX + Self.playButtonIconSize / 2
+                        // Midpoint between play’s trailing edge and the bar’s trailing edge.
+                        let menuCenterX = playTrailingX + (w - playTrailingX) / 2
+                        ZStack(alignment: .topLeading) {
+                            Color.clear
+                                .frame(width: w, height: h)
+                            Button {
+                                guard SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil else { return }
+                                audio.configureSessionDuration(sessionDurationSeconds)
+                                audio.toggle()
+                                if audio.sessionActive {
+                                    showActiveSession = true
+                                }
+                            } label: {
+                                Label("Play", systemImage: "play.circle.fill")
+                                    .font(.system(size: Self.playButtonIconSize))
+                                    .labelStyle(.iconOnly)
+                            }
+                            .buttonStyle(.borderless)
+                            .disabled(audio.isPlaying || audio.sessionActive)
+                            .position(x: playCenterX, y: h / 2)
+                            Menu {
+                                Button("Settings", action: {})
+                            } label: {
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 22, weight: .medium))
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .buttonStyle(.borderless)
+                            .frame(width: Self.menuButtonTapSize, height: Self.menuButtonTapSize)
+                            .contentShape(Rectangle())
+                            .accessibilityLabel("Menu")
+                            .position(x: menuCenterX, y: h / 2)
                         }
-                    } label: {
-                        Label("Play", systemImage: "play.circle.fill")
-                            .font(.system(size: 88))
-                            .labelStyle(.iconOnly)
+                        .frame(width: w, height: h)
                     }
-                    .buttonStyle(.borderless)
-                    .disabled(audio.isPlaying || audio.sessionActive)
+                    .frame(height: Self.playButtonIconSize)
                     .padding(.bottom, geo.size.height * Self.homePlayBottomInsetHeightFraction)
                 }
             }
