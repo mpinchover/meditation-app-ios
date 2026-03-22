@@ -82,4 +82,59 @@ enum SoundscapeCatalog {
     static func displayTitle(fileName: String) -> String {
         (fileName as NSString).deletingPathExtension
     }
+
+    // MARK: - Grouping (picker sections)
+
+    private static let sectionOrder: [String] = [
+        "Waves & Brainwaves",
+        "Meditation & Healing",
+        "Instruments & Bells",
+        "Drones & Tones",
+        "Ambient & Nature",
+    ]
+
+    /// Buckets each file into a section for the soundscape picker (keyword heuristics).
+    static func sectionTitle(forFileName fileName: String) -> String {
+        let t = displayTitle(fileName: fileName).lowercased()
+
+        if t.contains("meditation") || t.contains("chakra") || t.contains("lucid") || t.contains("stillness")
+            || t.contains("oneness") || t.contains("energy cleanse") || t.contains("anxiety")
+            || t.contains("cleansing") || t.contains("heart chakra") || t == "pure"
+            || t.contains("silver moon") || t.contains("negative energy") || t.contains("circle of") {
+            return "Meditation & Healing"
+        }
+        if t.contains("wave") || t.contains("alpha") || t.contains("delta") || t.contains("theta") || t.contains("gamma") {
+            return "Waves & Brainwaves"
+        }
+        if t.contains("bowl") || t.contains("didgeridoo") || t.contains("flute") || t.contains("bell")
+            || t.contains("tibetan") || t.contains("singing") || t.contains("ohm") || t.contains("peruvian")
+            || t.contains("temple") {
+            return "Instruments & Bells"
+        }
+        if t.contains("drone") {
+            return "Drones & Tones"
+        }
+        if t.contains("rain") || t.contains("fire") || t.contains("river") || t.contains("ocean") || t.contains("icy") {
+            return "Ambient & Nature"
+        }
+        return "Meditation & Healing"
+    }
+
+    /// Groups sorted filenames into ordered sections; empty sections are omitted.
+    static func groupedSoundscapeSections(files: [String]) -> [(title: String, files: [String])] {
+        var buckets: [String: [String]] = [:]
+        for s in sectionOrder { buckets[s] = [] }
+        for f in files {
+            let key = sectionTitle(forFileName: f)
+            if buckets[key] == nil { buckets[key] = [] }
+            buckets[key]?.append(f)
+        }
+        var result: [(title: String, files: [String])] = []
+        for title in sectionOrder {
+            guard let group = buckets[title]?.sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }),
+                  !group.isEmpty else { continue }
+            result.append((title, group))
+        }
+        return result
+    }
 }

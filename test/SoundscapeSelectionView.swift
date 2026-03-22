@@ -43,6 +43,7 @@ struct SoundscapeSelectionView: View {
     @State private var draftFileName: String
     @StateObject private var preview = SoundscapePreviewPlayer()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     init(files: [String], selectedFileName: Binding<String>) {
         self.files = files
@@ -50,29 +51,32 @@ struct SoundscapeSelectionView: View {
         _draftFileName = State(initialValue: selectedFileName.wrappedValue)
     }
 
+    private var sections: [(title: String, files: [String])] {
+        SoundscapeCatalog.groupedSoundscapeSections(files: files)
+    }
+
     var body: some View {
         List {
-            ForEach(files, id: \.self) { file in
-                Button {
-                    draftFileName = file
-                    preview.play(fileName: file)
-                } label: {
-                    HStack {
-                        Text(SoundscapeCatalog.displayTitle(fileName: file))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if draftFileName == file {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.tint)
-                        }
-                        if preview.playingFileName == file {
-                            Image(systemName: "waveform")
-                                .foregroundStyle(.secondary)
-                        }
+            ForEach(sections, id: \.title) { section in
+                Section {
+                    ForEach(section.files, id: \.self) { file in
+                        soundscapeRow(file: file)
                     }
+                } header: {
+                    Text(section.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
                 }
             }
         }
+#if os(iOS) || os(tvOS) || os(visionOS)
+        .listStyle(.insetGrouped)
+#else
+        .listStyle(.inset)
+#endif
+        .environment(\.defaultMinListRowHeight, 48)
+        .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -88,5 +92,58 @@ struct SoundscapeSelectionView: View {
         .onDisappear {
             preview.stop()
         }
+    }
+
+    @ViewBuilder
+    private func soundscapeRow(file: String) -> some View {
+        let isSelected = draftFileName == file
+        let isPlaying = preview.playingFileName == file
+        Button {
+            draftFileName = file
+            preview.play(fileName: file)
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Text(SoundscapeCatalog.displayTitle(fileName: file))
+                    .font(.body)
+                    .fontWeight(isPlaying ? .semibold : (isSelected ? .medium : .regular))
+                    .foregroundStyle(titleStyle(selected: isSelected))
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack(alignment: .trailing) {
+                    Color.clear.frame(width: 32, height: 32)
+                    if isPlaying {
+                        Image(systemName: "waveform")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Color.accentColor)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                }
+                .accessibilityHidden(!isPlaying)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+        .listRowBackground(
+            Group {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 0)
+                        .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.14))
+                } else {
+                    Color.clear
+                }
+            }
+        )
+    }
+
+    private func titleStyle(selected: Bool) -> AnyShapeStyle {
+        if selected {
+            return AnyShapeStyle(Color.accentColor)
+        }
+        return AnyShapeStyle(Color.primary.opacity(0.62))
     }
 }
