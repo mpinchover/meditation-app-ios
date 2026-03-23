@@ -125,10 +125,7 @@ struct SoundscapeSelectionView: View {
                 ZStack(alignment: .trailing) {
                     Color.clear.frame(width: 32, height: 32)
                     if isPlaying {
-                        Image(systemName: "waveform")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(Color.accentColor)
-                            .symbolRenderingMode(.hierarchical)
+                        PreviewPlayingWaveformView(isActive: isPlaying)
                     }
                 }
                 .accessibilityHidden(!isPlaying)
@@ -139,16 +136,7 @@ struct SoundscapeSelectionView: View {
         }
         .buttonStyle(.plain)
         .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-        .listRowBackground(
-            Group {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 0)
-                        .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.14))
-                } else {
-                    Color.clear
-                }
-            }
-        )
+        .listRowBackground(Color.clear)
     }
 
     private func titleStyle(selected: Bool) -> AnyShapeStyle {
