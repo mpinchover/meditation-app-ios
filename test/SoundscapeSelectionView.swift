@@ -68,6 +68,10 @@ struct SoundscapeSelectionView: View {
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
+            Section {
+                noSoundscapeRow()
+            }
+
             ForEach(sections, id: \.title) { section in
                 Section {
                     ForEach(section.files, id: \.self) { file in
@@ -129,6 +133,36 @@ struct SoundscapeSelectionView: View {
                     }
                 }
                 .accessibilityHidden(!isPlaying)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+        .listRowBackground(Color.clear)
+    }
+
+    @ViewBuilder
+    private func noSoundscapeRow() -> some View {
+        let isSelected = draftFileName.isEmpty
+        Button {
+            draftFileName = ""
+            preview.stop()
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Text("No soundscape")
+                    .font(.body)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundStyle(titleStyle(selected: isSelected))
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack(alignment: .trailing) {
+                    Color.clear.frame(width: 32, height: 32)
+                }
+                .accessibilityHidden(true)
             }
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
             .padding(.vertical, 2)

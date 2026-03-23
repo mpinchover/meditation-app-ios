@@ -35,7 +35,10 @@ struct HomeScreen: View {
     }
 
     private var selectedTitle: String {
-        SoundscapeCatalog.displayTitle(fileName: selectedSoundscapeFile)
+        if selectedSoundscapeFile.isEmpty {
+            return "No soundscape"
+        }
+        return SoundscapeCatalog.displayTitle(fileName: selectedSoundscapeFile)
     }
 
     private var timerDisplayText: String {
@@ -145,7 +148,6 @@ struct HomeScreen: View {
                             Color.clear
                                 .frame(width: w, height: h)
                             Button {
-                                guard SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil else { return }
                                 audio.configureSessionDuration(sessionDurationSeconds)
                                 attachSessionBellHandlers()
                                 audio.toggle()
@@ -221,13 +223,18 @@ struct HomeScreen: View {
                 syncSelectionWithCatalog()
                 syncBellSelectionWithCatalog()
                 audio.configureSessionDuration(sessionDurationSeconds)
-                if SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil {
+                if selectedSoundscapeFile.isEmpty {
+                    audio.clearSoundscape()
+                } else if SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil {
                     audio.applySoundscape(fileName: selectedSoundscapeFile)
                 }
             }
             .onChange(of: selectedSoundscapeFile) { _, newValue in
-                guard SoundscapeCatalog.urlInBundle(fileName: newValue) != nil else { return }
-                audio.applySoundscape(fileName: newValue)
+                if newValue.isEmpty {
+                    audio.clearSoundscape()
+                } else if SoundscapeCatalog.urlInBundle(fileName: newValue) != nil {
+                    audio.applySoundscape(fileName: newValue)
+                }
             }
             .onChange(of: sessionDurationSeconds) { _, newValue in
                 audio.configureSessionDuration(newValue)
@@ -241,7 +248,7 @@ struct HomeScreen: View {
             selectedSoundscapeFile = ""
             return
         }
-        if selectedSoundscapeFile.isEmpty || !files.contains(selectedSoundscapeFile) {
+        if !selectedSoundscapeFile.isEmpty, !files.contains(selectedSoundscapeFile) {
             selectedSoundscapeFile = files[0]
         }
     }

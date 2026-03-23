@@ -77,6 +77,13 @@ final class SoundscapePlayer: ObservableObject {
         }
     }
 
+    /// Clears the selected soundscape so the session can run silently.
+    func clearSoundscape() {
+        guard !isPlaying, !sessionActive else { return }
+        soundscapeURL = nil
+        tearDownEngine()
+    }
+
     func configureSessionDuration(_ totalSeconds: Int) {
         guard !isPlaying, !sessionActive else { return }
         sessionTotalSeconds = max(60, totalSeconds)
@@ -189,10 +196,7 @@ final class SoundscapePlayer: ObservableObject {
     }
 
     private func startPlayback() {
-        guard soundscapeURL != nil else { return }
-        ensureEngine()
-        guard engine != nil else { return }
-        if resumeA || resumeB {
+        if sessionActive {
             resumeFromPause()
         } else {
             startFromStopped()
@@ -200,10 +204,8 @@ final class SoundscapePlayer: ObservableObject {
     }
 
     private func startFromStopped() {
-        guard let na = nodeA, let nb = nodeB, let eng = engine else { return }
-
         slotStartDates.removeAll()
-        resumeA = true
+        resumeA = false
         resumeB = false
         primary = .a
 
@@ -211,26 +213,30 @@ final class SoundscapePlayer: ObservableObject {
         sessionDurationSeconds = sessionTotalSeconds
         sessionActive = true
         countdownFinished = false
-
-        na.stop()
-        nb.stop()
-
-        do {
-            if !eng.isRunning {
-                try eng.start()
-            }
-        } catch {
-            return
-        }
-
-        scheduleFullFile(on: .a) { [weak self] in
-            self?.handleNodeFinished(slot: .a)
-        }
-
         isPlaying = true
-        startPolling()
+
         startSessionCountdownTimer()
         onSessionStarted?()
+
+        // If a soundscape is selected, start audio playback. If not, the countdown still runs (bells still fire).
+        if soundscapeURL != nil {
+            ensureEngine()
+            if let eng = engine, nodeA != nil, nodeB != nil {
+                nodeA?.stop()
+                nodeB?.stop()
+
+                do {
+                    if !eng.isRunning {
+                        try eng.start()
+                    }
+                } catch { }
+
+                scheduleFullFile(on: .a) { [weak self] in
+                    self?.handleNodeFinished(slot: .a)
+                }
+                startPolling()
+            }
+        }
     }
 
     private func scheduleFullFile(on slot: PlayerSlot, completion: @escaping () -> Void) {
@@ -269,12 +275,13 @@ final class SoundscapePlayer: ObservableObject {
         if resumeA { nodeA?.play() }
         if resumeB { nodeB?.play() }
 
+        // Resume the session countdown even if there is no soundscape selected.
+        isPlaying = true
         if resumeA || resumeB {
-            isPlaying = true
             startPolling()
-            if !countdownFinished, sessionRemainingSeconds > 0 {
-                startSessionCountdownTimer()
-            }
+        }
+        if !countdownFinished, sessionRemainingSeconds > 0 {
+            startSessionCountdownTimer()
         }
     }
 
