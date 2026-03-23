@@ -11,10 +11,14 @@ struct BellMenuView: View {
     let bellFiles: [String]
     /// Increments each time the user opens this screen from home; used to reload drafts from persisted storage without clobbering drafts when popping back from a child picker.
     let presentationSeed: Int
-    @Binding var startingBellFile: String
-    @Binding var endingBellFile: String
-    @Binding var intervalBellFile: String
-    @Binding var intervalBellMinutes: Int
+    /// Tied to `navigationDestination(isPresented:)` on home; set `false` after Save so the stack returns reliably.
+    @Binding var isPresented: Bool
+
+    /// Written on Save only. Using `@AppStorage` here (not bindings from the parent) so values reliably persist—`Binding`s through `navigationDestination` can fail to update `UserDefaults`.
+    @AppStorage("startingBellFile") private var startingBellFile = ""
+    @AppStorage("endingBellFile") private var endingBellFile = ""
+    @AppStorage("intervalBellFile") private var intervalBellFile = ""
+    @AppStorage("intervalBellMinutes") private var intervalBellMinutes: Int = 5
 
     @State private var draftStartingBellFile = ""
     @State private var draftEndingBellFile = ""
@@ -24,6 +28,9 @@ struct BellMenuView: View {
     @State private var showStartingBellPicker = false
     @State private var showEndingBellPicker = false
     @State private var showIntervalBellPicker = false
+
+    /// Avoids re-loading from `@AppStorage` when popping a child picker (would wipe drafts). See `syncDraftsFromStorageIfNeeded`.
+    @State private var lastSyncedPresentationSeed: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -64,28 +71,56 @@ struct BellMenuView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     commitDraftsToPersistence()
+                    isPresented = false
                 }
             }
         }
         .navigationDestination(isPresented: $showStartingBellPicker) {
-            BellSelectionView(files: bellFiles, selectedFileName: $draftStartingBellFile, screenTitle: "Starting bell")
+            BellSelectionView(
+                files: bellFiles,
+                initialFileName: draftStartingBellFile,
+                screenTitle: "Starting bell",
+                onSelect: { draftStartingBellFile = $0 }
+            )
         }
         .navigationDestination(isPresented: $showEndingBellPicker) {
-            BellSelectionView(files: bellFiles, selectedFileName: $draftEndingBellFile, screenTitle: "Ending bell")
+            BellSelectionView(
+                files: bellFiles,
+                initialFileName: draftEndingBellFile,
+                screenTitle: "Ending bell",
+                onSelect: { draftEndingBellFile = $0 }
+            )
         }
         .navigationDestination(isPresented: $showIntervalBellPicker) {
             IntervalBellSelectionView(
                 files: bellFiles,
-                selectedFileName: $draftIntervalBellFile,
-                intervalMinutes: $draftIntervalBellMinutes
+                initialFileName: draftIntervalBellFile,
+                initialIntervalMinutes: draftIntervalBellMinutes,
+                onSelect: { file, minutes in
+                    draftIntervalBellFile = file
+                    draftIntervalBellMinutes = minutes
+                }
             )
         }
-        .onChange(of: presentationSeed, initial: true) { _, _ in
+        .onAppear {
+            syncDraftsFromStorageIfNeeded()
+        }
+        .onChange(of: presentationSeed) { _, newSeed in
+            lastSyncedPresentationSeed = newSeed
             draftStartingBellFile = startingBellFile
             draftEndingBellFile = endingBellFile
             draftIntervalBellFile = intervalBellFile
             draftIntervalBellMinutes = intervalBellMinutes
         }
+    }
+
+    private func syncDraftsFromStorageIfNeeded() {
+        guard lastSyncedPresentationSeed != presentationSeed else { return }
+        lastSyncedPresentationSeed = presentationSeed
+        draftStartingBellFile = startingBellFile
+        draftEndingBellFile = endingBellFile
+        draftIntervalBellFile = intervalBellFile
+        draftIntervalBellMinutes = intervalBellMinutes
     }
 
     private func commitDraftsToPersistence() {
@@ -129,7 +164,7 @@ struct BellMenuView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(.vertical, 10)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
         }

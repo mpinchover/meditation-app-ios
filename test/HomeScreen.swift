@@ -203,10 +203,7 @@ struct HomeScreen: View {
                 BellMenuView(
                     bellFiles: bellFiles,
                     presentationSeed: bellMenuPresentationSeed,
-                    startingBellFile: $startingBellFile,
-                    endingBellFile: $endingBellFile,
-                    intervalBellFile: $intervalBellFile,
-                    intervalBellMinutes: $intervalBellMinutes
+                    isPresented: $showBellPicker
                 )
             }
             .navigationDestination(isPresented: $showDurationPicker) {

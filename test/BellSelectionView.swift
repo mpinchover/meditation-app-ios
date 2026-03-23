@@ -167,16 +167,21 @@ private struct BellPickerList: View {
 struct BellSelectionView: View {
     let screenTitle: String
     let files: [String]
-    @Binding var selectedFileName: String
+    /// Current menu draft when this screen is opened (re-read each presentation).
+    let initialFileName: String
+    /// Prefer this over `Binding` through `navigationDestination` — parent `@State` updates are unreliable there.
+    let onSelect: (String) -> Void
+
     @State private var draftFileName: String
     @StateObject private var preview = BellPreviewPlayer()
     @Environment(\.dismiss) private var dismiss
 
-    init(files: [String], selectedFileName: Binding<String>, screenTitle: String) {
+    init(files: [String], initialFileName: String, screenTitle: String, onSelect: @escaping (String) -> Void) {
         self.screenTitle = screenTitle
         self.files = files
-        self._selectedFileName = selectedFileName
-        _draftFileName = State(initialValue: selectedFileName.wrappedValue)
+        self.initialFileName = initialFileName
+        self.onSelect = onSelect
+        _draftFileName = State(initialValue: initialFileName)
     }
 
     var body: some View {
@@ -184,14 +189,14 @@ struct BellSelectionView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Select") {
-                        selectedFileName = draftFileName
+                        onSelect(draftFileName)
                         preview.stop()
                         dismiss()
                     }
                 }
             }
             .onAppear {
-                draftFileName = selectedFileName
+                draftFileName = initialFileName
             }
             .onDisappear {
                 preview.stop()
@@ -203,17 +208,27 @@ struct BellSelectionView: View {
 
 struct IntervalBellSelectionView: View {
     let files: [String]
-    @Binding var selectedFileName: String
-    @Binding var intervalMinutes: Int
+    let initialFileName: String
+    let initialIntervalMinutes: Int
+    let onSelect: (String, Int) -> Void
+
     @State private var draftFileName: String
+    @State private var draftIntervalMinutes: Int
     @StateObject private var preview = BellPreviewPlayer()
     @Environment(\.dismiss) private var dismiss
 
-    init(files: [String], selectedFileName: Binding<String>, intervalMinutes: Binding<Int>) {
+    init(
+        files: [String],
+        initialFileName: String,
+        initialIntervalMinutes: Int,
+        onSelect: @escaping (String, Int) -> Void
+    ) {
         self.files = files
-        self._selectedFileName = selectedFileName
-        self._intervalMinutes = intervalMinutes
-        _draftFileName = State(initialValue: selectedFileName.wrappedValue)
+        self.initialFileName = initialFileName
+        self.initialIntervalMinutes = initialIntervalMinutes
+        self.onSelect = onSelect
+        _draftFileName = State(initialValue: initialFileName)
+        _draftIntervalMinutes = State(initialValue: max(1, min(30, initialIntervalMinutes)))
     }
 
     var body: some View {
@@ -224,14 +239,14 @@ struct IntervalBellSelectionView: View {
                         HStack(spacing: 12) {
                             Slider(
                                 value: Binding(
-                                    get: { Double(intervalMinutes) },
-                                    set: { intervalMinutes = min(30, max(1, Int($0.rounded()))) }
+                                    get: { Double(draftIntervalMinutes) },
+                                    set: { draftIntervalMinutes = min(30, max(1, Int($0.rounded()))) }
                                 ),
                                 in: 1...30,
                                 step: 1
                             )
                         }
-                        Text("Every \(intervalMinutes) minutes")
+                        Text("Every \(draftIntervalMinutes) minutes")
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                     }
@@ -244,16 +259,15 @@ struct IntervalBellSelectionView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Select") {
-                        selectedFileName = draftFileName
+                        onSelect(draftFileName, draftIntervalMinutes)
                         preview.stop()
                         dismiss()
                     }
                 }
             }
             .onAppear {
-                draftFileName = selectedFileName
-                if intervalMinutes < 1 { intervalMinutes = 1 }
-                if intervalMinutes > 30 { intervalMinutes = 30 }
+                draftFileName = initialFileName
+                draftIntervalMinutes = max(1, min(30, initialIntervalMinutes))
             }
             .onDisappear {
                 preview.stop()
