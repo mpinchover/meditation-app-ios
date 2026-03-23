@@ -35,7 +35,7 @@ struct BellMenuView: View {
                     showEndingBellPicker = true
                 }
                 bellMenuRow(
-                    title: "Interval bell",
+                    title: "Interval bells",
                     valueLabel: intervalRowSubtitle
                 ) {
                     showIntervalBellPicker = true
@@ -46,10 +46,10 @@ struct BellMenuView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationDestination(isPresented: $showStartingBellPicker) {
-            BellSelectionView(files: bellFiles, selectedFileName: $startingBellFile)
+            BellSelectionView(files: bellFiles, selectedFileName: $startingBellFile, screenTitle: "Starting bell")
         }
         .navigationDestination(isPresented: $showEndingBellPicker) {
-            BellSelectionView(files: bellFiles, selectedFileName: $endingBellFile)
+            BellSelectionView(files: bellFiles, selectedFileName: $endingBellFile, screenTitle: "Ending bell")
         }
         .navigationDestination(isPresented: $showIntervalBellPicker) {
             IntervalBellSelectionView(

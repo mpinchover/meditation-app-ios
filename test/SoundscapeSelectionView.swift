@@ -57,6 +57,17 @@ struct SoundscapeSelectionView: View {
 
     var body: some View {
         List {
+            Section {
+                Text("Soundscapes")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+            }
+            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 12, trailing: 20))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
             ForEach(sections, id: \.title) { section in
                 Section {
                     ForEach(section.files, id: \.self) { file in

@@ -39,6 +39,7 @@ final class BellPreviewPlayer: ObservableObject {
 // MARK: - Shared list
 
 private struct BellPickerList: View {
+    let screenTitle: String
     let files: [String]
     @Binding var draftFileName: String
     @ObservedObject var preview: BellPreviewPlayer
@@ -50,6 +51,17 @@ private struct BellPickerList: View {
 
     var body: some View {
         List {
+            Section {
+                Text(screenTitle)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+            }
+            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 12, trailing: 20))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
             Section {
                 noBellRow()
             }
@@ -174,20 +186,22 @@ private struct BellPickerList: View {
 // MARK: - Starting / ending bell
 
 struct BellSelectionView: View {
+    let screenTitle: String
     let files: [String]
     @Binding var selectedFileName: String
     @State private var draftFileName: String
     @StateObject private var preview = BellPreviewPlayer()
     @Environment(\.dismiss) private var dismiss
 
-    init(files: [String], selectedFileName: Binding<String>) {
+    init(files: [String], selectedFileName: Binding<String>, screenTitle: String) {
+        self.screenTitle = screenTitle
         self.files = files
         self._selectedFileName = selectedFileName
         _draftFileName = State(initialValue: selectedFileName.wrappedValue)
     }
 
     var body: some View {
-        BellPickerList(files: files, draftFileName: $draftFileName, preview: preview)
+        BellPickerList(screenTitle: screenTitle, files: files, draftFileName: $draftFileName, preview: preview)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -224,7 +238,7 @@ struct IntervalBellSelectionView: View {
     }
 
     var body: some View {
-        BellPickerList(files: files, draftFileName: $draftFileName, preview: preview)
+        BellPickerList(screenTitle: "Interval bell", files: files, draftFileName: $draftFileName, preview: preview)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if !draftFileName.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
