@@ -17,6 +17,7 @@ struct HomeScreen: View {
     @AppStorage("sessionDurationSeconds") private var sessionDurationSeconds: Int = 180
     @State private var showSoundscapePicker = false
     @State private var showBellPicker = false
+    @State private var bellMenuPresentationSeed = 0
     @State private var showDurationPicker = false
     @State private var showActiveSession = false
 
@@ -160,6 +161,7 @@ struct HomeScreen: View {
                             .disabled(audio.isPlaying || audio.sessionActive)
                             .position(x: playCenterX, y: h / 2)
                             Button {
+                                bellMenuPresentationSeed += 1
                                 showBellPicker = true
                             } label: {
                                 Image(systemName: "line.3.horizontal")
@@ -200,6 +202,7 @@ struct HomeScreen: View {
             .navigationDestination(isPresented: $showBellPicker) {
                 BellMenuView(
                     bellFiles: bellFiles,
+                    presentationSeed: bellMenuPresentationSeed,
                     startingBellFile: $startingBellFile,
                     endingBellFile: $endingBellFile,
                     intervalBellFile: $intervalBellFile,

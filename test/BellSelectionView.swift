@@ -204,7 +204,7 @@ struct BellSelectionView: View {
         BellPickerList(screenTitle: screenTitle, files: files, draftFileName: $draftFileName, preview: preview)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Select") {
                         selectedFileName = draftFileName
                         preview.stop()
                         dismiss()
@@ -264,7 +264,7 @@ struct IntervalBellSelectionView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Select") {
                         selectedFileName = draftFileName
                         preview.stop()
                         dismiss()

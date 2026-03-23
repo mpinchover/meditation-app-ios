@@ -9,28 +9,42 @@ import SwiftUI
 
 struct BellMenuView: View {
     let bellFiles: [String]
+    /// Increments each time the user opens this screen from home; used to reload drafts from persisted storage without clobbering drafts when popping back from a child picker.
+    let presentationSeed: Int
     @Binding var startingBellFile: String
     @Binding var endingBellFile: String
     @Binding var intervalBellFile: String
     @Binding var intervalBellMinutes: Int
+
+    @State private var draftStartingBellFile = ""
+    @State private var draftEndingBellFile = ""
+    @State private var draftIntervalBellFile = ""
+    @State private var draftIntervalBellMinutes = 5
 
     @State private var showStartingBellPicker = false
     @State private var showEndingBellPicker = false
     @State private var showIntervalBellPicker = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Bells")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
+
             VStack(spacing: 12) {
                 bellMenuRow(
                     title: "Starting bell",
-                    valueLabel: displaySubtitle(for: startingBellFile)
+                    valueLabel: displaySubtitle(for: draftStartingBellFile)
                 ) {
                     showStartingBellPicker = true
                 }
                 bellMenuRow(
                     title: "Ending bell",
-                    valueLabel: displaySubtitle(for: endingBellFile)
+                    valueLabel: displaySubtitle(for: draftEndingBellFile)
                 ) {
                     showEndingBellPicker = true
                 }
@@ -42,30 +56,51 @@ struct BellMenuView: View {
                 }
             }
             .padding(.horizontal, 20)
+
             Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    commitDraftsToPersistence()
+                }
+            }
+        }
         .navigationDestination(isPresented: $showStartingBellPicker) {
-            BellSelectionView(files: bellFiles, selectedFileName: $startingBellFile, screenTitle: "Starting bell")
+            BellSelectionView(files: bellFiles, selectedFileName: $draftStartingBellFile, screenTitle: "Starting bell")
         }
         .navigationDestination(isPresented: $showEndingBellPicker) {
-            BellSelectionView(files: bellFiles, selectedFileName: $endingBellFile, screenTitle: "Ending bell")
+            BellSelectionView(files: bellFiles, selectedFileName: $draftEndingBellFile, screenTitle: "Ending bell")
         }
         .navigationDestination(isPresented: $showIntervalBellPicker) {
             IntervalBellSelectionView(
                 files: bellFiles,
-                selectedFileName: $intervalBellFile,
-                intervalMinutes: $intervalBellMinutes
+                selectedFileName: $draftIntervalBellFile,
+                intervalMinutes: $draftIntervalBellMinutes
             )
+        }
+        .onChange(of: presentationSeed, initial: true) { _, _ in
+            draftStartingBellFile = startingBellFile
+            draftEndingBellFile = endingBellFile
+            draftIntervalBellFile = intervalBellFile
+            draftIntervalBellMinutes = intervalBellMinutes
         }
     }
 
+    private func commitDraftsToPersistence() {
+        startingBellFile = draftStartingBellFile
+        endingBellFile = draftEndingBellFile
+        intervalBellFile = draftIntervalBellFile
+        intervalBellMinutes = draftIntervalBellMinutes
+    }
+
     private var intervalRowSubtitle: String {
-        if intervalBellFile.isEmpty {
+        if draftIntervalBellFile.isEmpty {
             return "No bell"
         }
-        let name = displaySubtitle(for: intervalBellFile)
-        return "\(intervalBellMinutes) min · \(name)"
+        let name = displaySubtitle(for: draftIntervalBellFile)
+        return "\(draftIntervalBellMinutes) min · \(name)"
     }
 
     private func displaySubtitle(for file: String) -> String {
