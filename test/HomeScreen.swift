@@ -59,8 +59,7 @@ struct HomeScreen: View {
 
     private var homeMainVStack: some View {
         GeometryReader { geo in
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
+            ZStack(alignment: .topLeading) {
                 VStack(spacing: 12) {
                     Button {
                         showSoundscapePicker = true
@@ -122,7 +121,14 @@ struct HomeScreen: View {
                     .accessibilityLabel("Duration, \(ElapsedFormat.sessionCountdown(sessionDurationSeconds))")
                     .accessibilityHint("Opens screen to set session length")
                 }
-                Spacer(minLength: 0)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+                Text("Callysto")
+                    .font(.largeTitle.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+                    .position(x: geo.size.width / 2, y: geo.size.height * 0.2)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0) {
