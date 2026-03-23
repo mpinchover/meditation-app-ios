@@ -96,6 +96,7 @@ final class SoundscapePlayer: ObservableObject {
         onSessionStarted = nil
         onCountdownTick = nil
         onNaturalCountdownComplete = nil
+        SessionBellPlayback.stopAll()
         tearDownEngine()
         sessionRemainingSeconds = 0
         sessionActive = false

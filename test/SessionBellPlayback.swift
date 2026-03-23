@@ -34,6 +34,14 @@ enum SessionBellPlayback {
         active.removeAll { $0 === held }
     }
 
+    /// Stops every in-flight session bell (e.g. when the user finishes the meditation).
+    static func stopAll() {
+        for held in active {
+            held.player.stop()
+        }
+        active.removeAll()
+    }
+
     static func play(fileName: String) {
         guard !fileName.isEmpty, let url = BellsCatalog.urlInBundle(fileName: fileName) else { return }
         do {
