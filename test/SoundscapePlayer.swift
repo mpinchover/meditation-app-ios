@@ -92,6 +92,20 @@ final class SoundscapePlayer: ObservableObject {
         }
     }
 
+    /// Pauses soundscape, crossfade polling, and countdown; stops any in-flight session bells.
+    func pauseSession() {
+        guard sessionActive, isPlaying else { return }
+        SessionBellPlayback.stopAll()
+        pausePlayback()
+    }
+
+    /// Resumes soundscape and countdown (countdown only if it had not reached zero).
+    func resumeSession() {
+        guard sessionActive, !isPlaying else { return }
+        ensureEngine()
+        startPlayback()
+    }
+
     func finish() {
         onSessionStarted = nil
         onCountdownTick = nil
