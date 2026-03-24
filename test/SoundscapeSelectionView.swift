@@ -72,16 +72,16 @@ struct SoundscapeSelectionView: View {
                 noSoundscapeRow()
             }
 
-            ForEach(sections, id: \.title) { section in
+            ForEach(Array(sections.enumerated()), id: \.offset) { sectionIndex, section in
                 Section {
-                    ForEach(section.files, id: \.self) { file in
-                        soundscapeRow(file: file)
+                    sectionCategoryTitleRow(title: section.title, isFirstCategory: sectionIndex == 0)
+                    ForEach(section.files.indices, id: \.self) { index in
+                        soundscapeRow(
+                            file: section.files[index],
+                            isFirstInSection: index == 0,
+                            isLastInSection: index == section.files.count - 1
+                        )
                     }
-                } header: {
-                    Text(section.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
                 }
             }
         }
@@ -111,8 +111,21 @@ struct SoundscapeSelectionView: View {
         }
     }
 
+    private func sectionCategoryTitleRow(title: String, isFirstCategory: Bool) -> some View {
+        Text(title)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .textCase(nil)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityAddTraits(.isHeader)
+            .listRowInsets(EdgeInsets(top: isFirstCategory ? 8 : 20, leading: 20, bottom: 4, trailing: 20))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listSectionSeparator(.hidden)
+    }
+
     @ViewBuilder
-    private func soundscapeRow(file: String) -> some View {
+    private func soundscapeRow(file: String, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
         let isSelected = draftFileName == file
         let isPlaying = preview.playingFileName == file
         Button {
@@ -143,6 +156,8 @@ struct SoundscapeSelectionView: View {
         .buttonStyle(.plain)
         .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
         .listRowBackground(Color.clear)
+        .listRowSeparator(isLastInSection ? .hidden : .visible, edges: .bottom)
+        .listRowSeparator(isFirstInSection ? .hidden : .visible, edges: .top)
     }
 
     @ViewBuilder
@@ -153,7 +168,7 @@ struct SoundscapeSelectionView: View {
             preview.stop()
         } label: {
             HStack(alignment: .center, spacing: 12) {
-                Text("No soundscape")
+                Text("No selection")
                     .font(.body)
                     .fontWeight(isSelected ? .semibold : .regular)
                     .foregroundStyle(titleStyle(selected: isSelected))
@@ -173,6 +188,7 @@ struct SoundscapeSelectionView: View {
         .buttonStyle(.plain)
         .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
         .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
 
     private func titleStyle(selected: Bool) -> AnyShapeStyle {

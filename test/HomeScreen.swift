@@ -36,7 +36,7 @@ struct HomeScreen: View {
 
     private var selectedTitle: String {
         if selectedSoundscapeFile.isEmpty {
-            return "No soundscape"
+            return "No selection"
         }
         return SoundscapeCatalog.displayTitle(fileName: selectedSoundscapeFile)
     }
