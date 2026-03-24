@@ -93,6 +93,7 @@ private struct BellPickerList: View {
         .listStyle(.inset)
 #endif
         .environment(\.defaultMinListRowHeight, 48)
+        .contentMargins(.horizontal, 0, for: .scrollContent)
         .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
     }
 

@@ -86,7 +86,9 @@ struct SoundscapeSelectionView: View {
             }
         }
 #if os(iOS) || os(tvOS) || os(visionOS)
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        /// Pulls section content toward the `List` edges so it reads wider (less gap vs. the list’s bounds).
+        .contentMargins(.horizontal, 0, for: .scrollContent)
 #else
         .listStyle(.inset)
 #endif
