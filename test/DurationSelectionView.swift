@@ -16,6 +16,14 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
     @Binding var totalSeconds: Int
 
     static let maxSeconds = 23 * 3600 + 59 * 60
+    static var totalWidth: CGFloat {
+        // Matches the constraints applied to the returned UIKit `UIStackView` ("green border").
+        // hourColumn/minuteColumn = (wheel + label) * 2 + suffix; then two columns + outer spacing.
+        let column = Layout.columnWidth
+        let suffix = Layout.suffixColumnSpacing
+        let outer = Layout.outerColumnSpacing
+        return (column * 2 + suffix) * 2 + outer
+    }
 
     private enum Layout {
 #if os(tvOS)
@@ -103,6 +111,7 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         hLabel.textColor = UIColor.secondaryLabel
         hLabel.setContentHuggingPriority(.required, for: .horizontal)
         hLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        hLabel.widthAnchor.constraint(equalToConstant: Layout.columnWidth).isActive = true
 
         let mLabel = UILabel()
         mLabel.text = "m"
@@ -110,6 +119,7 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         mLabel.textColor = UIColor.secondaryLabel
         mLabel.setContentHuggingPriority(.required, for: .horizontal)
         mLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        mLabel.widthAnchor.constraint(equalToConstant: Layout.columnWidth).isActive = true
 
         // Picker + suffix per column so unit labels aren’t squeezed between two wide wheels.
         let hourColumn = UIStackView(arrangedSubviews: [hourPV, hLabel])
@@ -117,12 +127,14 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         hourColumn.spacing = Layout.suffixColumnSpacing
         hourColumn.alignment = .center
         hourColumn.distribution = .fill
+        hourColumn.widthAnchor.constraint(equalToConstant: Layout.columnWidth * 2 + Layout.suffixColumnSpacing).isActive = true
 
         let minuteColumn = UIStackView(arrangedSubviews: [minutePV, mLabel])
         minuteColumn.axis = .horizontal
         minuteColumn.spacing = Layout.suffixColumnSpacing
         minuteColumn.alignment = .center
         minuteColumn.distribution = .fill
+        minuteColumn.widthAnchor.constraint(equalToConstant: Layout.columnWidth * 2 + Layout.suffixColumnSpacing).isActive = true
 
         hourPV.setContentHuggingPriority(.defaultLow, for: .horizontal)
         minutePV.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -132,6 +144,9 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         stack.spacing = Layout.outerColumnSpacing
         stack.alignment = .center
         stack.distribution = .fillEqually
+        stack.widthAnchor.constraint(equalToConstant: (Layout.columnWidth * 2 + Layout.suffixColumnSpacing) * 2 + Layout.outerColumnSpacing).isActive = true
+        stack.setContentHuggingPriority(.required, for: .horizontal)
+        stack.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         hourColumn.widthAnchor.constraint(equalTo: minuteColumn.widthAnchor).isActive = true
 
@@ -191,7 +206,9 @@ struct DurationSelectionView: View {
             VStack(spacing: 8) {
 #if os(iOS) || os(tvOS) || os(visionOS)
                 DurationWheelPickerRepresentable(totalSeconds: $draftSeconds)
+                    .frame(width: DurationWheelPickerRepresentable.totalWidth)
                     .frame(minHeight: 160)
+                    .frame(maxWidth: .infinity, alignment: .center)
 #else
                 HStack(spacing: 6) {
                     Picker("Hours", selection: hourBinding) {
@@ -199,7 +216,7 @@ struct DurationSelectionView: View {
                             Text("\(h)").tag(h)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 72)
                     .clipped()
 
                     Text("h")
@@ -212,7 +229,7 @@ struct DurationSelectionView: View {
                             Text(String(format: "%02d", m)).tag(m)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 72)
                     .clipped()
 
                     Text("m")
@@ -221,6 +238,7 @@ struct DurationSelectionView: View {
                         .fixedSize()
                 }
                 .frame(minHeight: 180)
+                .frame(maxWidth: .infinity, alignment: .center)
 #endif
             }
 
