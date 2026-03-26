@@ -89,11 +89,13 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         hourPV.delegate = c
         hourPV.dataSource = c
         c.hourPicker = hourPV
+        hourPV.widthAnchor.constraint(equalToConstant: Layout.columnWidth).isActive = true
 
         let minutePV = UIPickerView()
         minutePV.delegate = c
         minutePV.dataSource = c
         c.minutePicker = minutePV
+        minutePV.widthAnchor.constraint(equalToConstant: Layout.columnWidth).isActive = true
 
         let hLabel = UILabel()
         hLabel.text = "h"
