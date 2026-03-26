@@ -132,15 +132,15 @@ struct BellMenuView: View {
 
     private var intervalRowSubtitle: String {
         if draftIntervalBellFile.isEmpty {
-            return "No bell"
+            return "No selection"
         }
         let name = displaySubtitle(for: draftIntervalBellFile)
         return "\(draftIntervalBellMinutes) min · \(name)"
     }
 
     private func displaySubtitle(for file: String) -> String {
-        if file.isEmpty { return "No bell" }
-        guard bellFiles.contains(file) else { return "No bell" }
+        if file.isEmpty { return "No selection" }
+        guard bellFiles.contains(file) else { return "No selection" }
         return BellsCatalog.displayTitle(fileName: file)
     }
 

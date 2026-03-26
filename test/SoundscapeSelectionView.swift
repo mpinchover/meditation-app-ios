@@ -128,67 +128,33 @@ struct SoundscapeSelectionView: View {
     private func soundscapeRow(file: String, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
         let isSelected = draftFileName == file
         let isPlaying = preview.playingFileName == file
-        Button {
+        SelectableSoundRow(
+            title: SoundscapeCatalog.displayTitle(fileName: file),
+            isSelected: isSelected,
+            isPlaying: isPlaying,
+            titleStyle: titleStyle(selected: isSelected),
+            showTopSeparator: !isFirstInSection,
+            showBottomSeparator: !isLastInSection
+        ) {
             draftFileName = file
             preview.play(fileName: file)
-        } label: {
-            HStack(alignment: .center, spacing: 12) {
-                Text(SoundscapeCatalog.displayTitle(fileName: file))
-                    .font(.body)
-                    .fontWeight(isPlaying ? .semibold : (isSelected ? .medium : .regular))
-                    .foregroundStyle(titleStyle(selected: isSelected))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                ZStack(alignment: .trailing) {
-                    Color.clear.frame(width: 32, height: 32)
-                    if isPlaying {
-                        PreviewPlayingWaveformView(isActive: isPlaying)
-                    }
-                }
-                .accessibilityHidden(!isPlaying)
-            }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-        .listRowBackground(Color.clear)
-        .listRowSeparator(isLastInSection ? .hidden : .visible, edges: .bottom)
-        .listRowSeparator(isFirstInSection ? .hidden : .visible, edges: .top)
     }
 
     @ViewBuilder
     private func noSoundscapeRow() -> some View {
         let isSelected = draftFileName.isEmpty
-        Button {
+        SelectableSoundRow(
+            title: "No selection",
+            isSelected: isSelected,
+            isPlaying: false,
+            titleStyle: titleStyle(selected: isSelected),
+            showTopSeparator: false,
+            showBottomSeparator: false
+        ) {
             draftFileName = ""
             preview.stop()
-        } label: {
-            HStack(alignment: .center, spacing: 12) {
-                Text("No selection")
-                    .font(.body)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                    .foregroundStyle(titleStyle(selected: isSelected))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                ZStack(alignment: .trailing) {
-                    Color.clear.frame(width: 32, height: 32)
-                }
-                .accessibilityHidden(true)
-            }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
     }
 
     private func titleStyle(selected: Bool) -> AnyShapeStyle {

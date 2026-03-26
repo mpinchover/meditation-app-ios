@@ -75,8 +75,12 @@ private struct BellPickerList: View {
             } else {
                 ForEach(sections, id: \.title) { section in
                     Section {
-                        ForEach(section.files, id: \.self) { file in
-                            bellRow(file: file)
+                        ForEach(section.files.indices, id: \.self) { index in
+                            bellRow(
+                                file: section.files[index],
+                                isFirstInSection: index == 0,
+                                isLastInSection: index == section.files.count - 1
+                            )
                         }
                     } header: {
                         Text(section.title)
@@ -88,7 +92,7 @@ private struct BellPickerList: View {
             }
         }
 #if os(iOS) || os(tvOS) || os(visionOS)
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
 #else
         .listStyle(.inset)
 #endif
@@ -100,59 +104,34 @@ private struct BellPickerList: View {
     @ViewBuilder
     private func noBellRow() -> some View {
         let isSelected = draftFileName.isEmpty
-        Button {
+        SelectableSoundRow(
+            title: "No selection",
+            isSelected: isSelected,
+            isPlaying: false,
+            titleStyle: titleStyle(selected: isSelected),
+            showTopSeparator: false,
+            showBottomSeparator: false
+        ) {
             draftFileName = ""
             preview.stop()
-        } label: {
-            HStack(alignment: .center, spacing: 12) {
-                Text("No bell")
-                    .font(.body)
-                    .fontWeight(isSelected ? .medium : .regular)
-                    .foregroundStyle(titleStyle(selected: isSelected))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Color.clear.frame(width: 32, height: 32)
-            }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-        .listRowBackground(Color.clear)
     }
 
     @ViewBuilder
-    private func bellRow(file: String) -> some View {
+    private func bellRow(file: String, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
         let isSelected = draftFileName == file
         let isPlaying = preview.playingFileName == file
-        Button {
+        SelectableSoundRow(
+            title: BellsCatalog.displayTitle(fileName: file),
+            isSelected: isSelected,
+            isPlaying: isPlaying,
+            titleStyle: titleStyle(selected: isSelected),
+            showTopSeparator: !isFirstInSection,
+            showBottomSeparator: !isLastInSection
+        ) {
             draftFileName = file
             preview.play(fileName: file)
-        } label: {
-            HStack(alignment: .center, spacing: 12) {
-                Text(BellsCatalog.displayTitle(fileName: file))
-                    .font(.body)
-                    .fontWeight(isPlaying ? .semibold : (isSelected ? .medium : .regular))
-                    .foregroundStyle(titleStyle(selected: isSelected))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                ZStack(alignment: .trailing) {
-                    Color.clear.frame(width: 32, height: 32)
-                    if isPlaying {
-                        PreviewPlayingWaveformView(isActive: isPlaying)
-                    }
-                }
-                .accessibilityHidden(!isPlaying)
-            }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-        .listRowBackground(Color.clear)
     }
 
     private func titleStyle(selected: Bool) -> AnyShapeStyle {
