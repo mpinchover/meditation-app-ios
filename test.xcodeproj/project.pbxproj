@@ -102,6 +102,7 @@
 				FB173F3B2F6F58AA004102AA /* Sources */,
 				FB173F3C2F6F58AA004102AA /* Frameworks */,
 				FB173F3D2F6F58AA004102AA /* Resources */,
+				FB173F6B2F6F58AB004102AA /* Copy assets preserving folders */,
 			);
 			buildRules = (
 			);
@@ -230,6 +231,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		FB173F6B2F6F58AB004102AA /* Copy assets preserving folders */ = {
+			isa = PBXShellScriptBuildPhase;
+			basedOnDependencyAnalysis = YES;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/test/assets",
+			);
+			name = "Copy assets preserving folders";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/test-bundled-assets.stamp",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/assets",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nASSETS_SRC=\"${SRCROOT}/test/assets\"\nDEST_ROOT=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nASSETS_DST=\"${DEST_ROOT}/assets\"\nmkdir -p \"${DEST_ROOT}\"\nrm -rf \"${ASSETS_DST}\"\n/usr/bin/ditto \"${ASSETS_SRC}\" \"${ASSETS_DST}\"\ntouch \"${DERIVED_FILE_DIR}/test-bundled-assets.stamp\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		FB173F3B2F6F58AA004102AA /* Sources */ = {
@@ -392,6 +418,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -429,6 +456,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

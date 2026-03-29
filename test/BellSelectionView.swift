@@ -67,7 +67,7 @@ private struct BellPickerList: View {
             }
             if files.isEmpty {
                 Section {
-                    Text("Add WAV or MP3 files to the target (names should include “bell” or “gong”).")
+                    Text("Add audio under test/assets/bells (subfolders appear as groups in this list).")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
