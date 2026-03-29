@@ -39,7 +39,7 @@ struct BellMenuView: View {
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 8)
-                .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+                .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
                 .padding(.bottom, 20)
 
             VStack(spacing: 12) {
@@ -62,7 +62,7 @@ struct BellMenuView: View {
                     showIntervalBellPicker = true
                 }
             }
-            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+            .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
 
             Spacer(minLength: 0)
         }
@@ -165,7 +165,7 @@ struct BellMenuView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(.vertical, 10)
-            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+            .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
         }

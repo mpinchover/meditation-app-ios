@@ -64,7 +64,7 @@ struct SoundscapeSelectionView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
-            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.headerHorizontalPadding, bottom: 12, trailing: AppScreenChrome.headerHorizontalPadding))
+            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 12, trailing: AppScreenChrome.navigationContentHorizontalPadding))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
@@ -119,7 +119,7 @@ struct SoundscapeSelectionView: View {
             .textCase(nil)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityAddTraits(.isHeader)
-            .listRowInsets(EdgeInsets(top: isFirstCategory ? 8 : 20, leading: AppScreenChrome.headerHorizontalPadding, bottom: 4, trailing: AppScreenChrome.headerHorizontalPadding))
+            .listRowInsets(EdgeInsets(top: isFirstCategory ? 8 : 20, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 4, trailing: AppScreenChrome.navigationContentHorizontalPadding))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listSectionSeparator(.hidden)

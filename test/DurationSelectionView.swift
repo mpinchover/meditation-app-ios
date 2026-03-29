@@ -206,7 +206,7 @@ struct DurationSelectionView: View {
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+                .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
                 .padding(.top, 4)
 
             VStack(spacing: 8) {

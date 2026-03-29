@@ -40,7 +40,7 @@ struct SelectableSoundRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 0, leading: AppScreenChrome.headerHorizontalPadding, bottom: 0, trailing: AppScreenChrome.headerHorizontalPadding))
+        .listRowInsets(EdgeInsets(top: 0, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 0, trailing: AppScreenChrome.navigationContentHorizontalPadding))
         .listRowBackground(Color.clear)
         .listRowSeparator(showBottomSeparator ? .visible : .hidden, edges: .bottom)
         .listRowSeparator(showTopSeparator ? .visible : .hidden, edges: .top)

@@ -58,7 +58,7 @@ private struct BellPickerList: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
-            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.headerHorizontalPadding, bottom: 12, trailing: AppScreenChrome.headerHorizontalPadding))
+            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 12, trailing: AppScreenChrome.navigationContentHorizontalPadding))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
@@ -70,7 +70,7 @@ private struct BellPickerList: View {
                     Text("Add audio under test/assets/bells (subfolders appear as groups in this list).")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                        .listRowInsets(EdgeInsets(top: 8, leading: AppScreenChrome.headerHorizontalPadding, bottom: 8, trailing: AppScreenChrome.headerHorizontalPadding))
+                        .listRowInsets(EdgeInsets(top: 8, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 8, trailing: AppScreenChrome.navigationContentHorizontalPadding))
                 }
             } else {
                 ForEach(sections, id: \.title) { section in
@@ -231,7 +231,7 @@ struct IntervalBellSelectionView: View {
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+                    .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
                     .padding(.vertical, 16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.bar)

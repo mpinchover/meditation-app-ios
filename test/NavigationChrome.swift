@@ -7,9 +7,14 @@
 
 import SwiftUI
 
-/// Shared metrics for pushed screens (titles, rows aligned with navigation chrome).
+/// Shared layout metrics.
 enum AppScreenChrome {
+    /// Horizontal inset for the root home layout (no bar-button gutter).
     static let headerHorizontalPadding: CGFloat = 20
+    /// Horizontal inset for content on **pushed** screens. Matches the navigation bar’s leading/trailing
+    /// margin for items like **Back** (~16pt on iPhone). Using 20pt `listRowInsets` here makes list text
+    /// sit **right** of the Back label because bar buttons use the tighter system inset.
+    static let navigationContentHorizontalPadding: CGFloat = 16
 }
 
 extension View {
