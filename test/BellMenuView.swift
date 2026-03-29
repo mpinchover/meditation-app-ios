@@ -38,9 +38,9 @@ struct BellMenuView: View {
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
                 .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
-                .padding(.top, 4)
-                .padding(.bottom, 12)
+                .padding(.bottom, 20)
 
             VStack(spacing: 12) {
                 bellMenuRow(
