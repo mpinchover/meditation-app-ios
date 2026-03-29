@@ -71,7 +71,7 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
             label.textAlignment = .center
             label.font = UIFont.preferredFont(forTextStyle: .callout)
             label.adjustsFontForContentSizeCategory = true
-            label.textColor = UIColor.label
+            label.textColor = AppTheme.uiRowValue
             return label
         }
 
@@ -108,7 +108,7 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         let hLabel = UILabel()
         hLabel.text = "h"
         hLabel.font = UIFont.preferredFont(forTextStyle: .callout)
-        hLabel.textColor = UIColor.secondaryLabel
+        hLabel.textColor = AppTheme.uiSecondary
         hLabel.setContentHuggingPriority(.required, for: .horizontal)
         hLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         hLabel.widthAnchor.constraint(equalToConstant: Layout.columnWidth).isActive = true
@@ -116,7 +116,7 @@ fileprivate struct DurationWheelPickerRepresentable: UIViewRepresentable {
         let mLabel = UILabel()
         mLabel.text = "m"
         mLabel.font = UIFont.preferredFont(forTextStyle: .callout)
-        mLabel.textColor = UIColor.secondaryLabel
+        mLabel.textColor = AppTheme.uiSecondary
         mLabel.setContentHuggingPriority(.required, for: .horizontal)
         mLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         mLabel.widthAnchor.constraint(equalToConstant: Layout.columnWidth).isActive = true
@@ -204,7 +204,7 @@ struct DurationSelectionView: View {
         VStack(spacing: 20) {
             Text("Duration")
                 .font(.title2.weight(.semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(AppTheme.heroTitle)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
                 .padding(.top, 4)
@@ -224,10 +224,11 @@ struct DurationSelectionView: View {
                     }
                     .frame(width: 72)
                     .clipped()
+                    .tint(AppTheme.selectionAccent)
 
                     Text("h")
                         .font(.body)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                         .fixedSize()
 
                     Picker("Minutes", selection: minuteBinding) {
@@ -237,10 +238,11 @@ struct DurationSelectionView: View {
                     }
                     .frame(width: 72)
                     .clipped()
+                    .tint(AppTheme.selectionAccent)
 
                     Text("m")
                         .font(.body)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                         .fixedSize()
                 }
                 .frame(minHeight: 180)
@@ -251,6 +253,7 @@ struct DurationSelectionView: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical)
+        .appThemedScreen()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {

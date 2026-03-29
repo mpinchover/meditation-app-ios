@@ -43,7 +43,6 @@ struct SoundscapeSelectionView: View {
     @State private var draftFileName: String
     @StateObject private var preview = SoundscapePreviewPlayer()
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
 
     init(files: [String], selectedFileName: Binding<String>) {
         self.files = files
@@ -60,7 +59,7 @@ struct SoundscapeSelectionView: View {
             Section {
                 Text("Soundscapes")
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AppTheme.heroTitle)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
@@ -93,7 +92,8 @@ struct SoundscapeSelectionView: View {
         .listStyle(.inset)
 #endif
         .environment(\.defaultMinListRowHeight, 48)
-        .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
+        .listRowSeparatorTint(AppTheme.listSeparator)
+        .appThemedListScreen()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -115,7 +115,7 @@ struct SoundscapeSelectionView: View {
     private func sectionCategoryTitleRow(title: String, isFirstCategory: Bool) -> some View {
         Text(title)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(AppTheme.secondaryText)
             .textCase(nil)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityAddTraits(.isHeader)
@@ -160,8 +160,8 @@ struct SoundscapeSelectionView: View {
 
     private func titleStyle(selected: Bool) -> AnyShapeStyle {
         if selected {
-            return AnyShapeStyle(Color.accentColor)
+            return AnyShapeStyle(AppTheme.selectionAccent)
         }
-        return AnyShapeStyle(Color.primary.opacity(0.62))
+        return AnyShapeStyle(AppTheme.rowValue.opacity(AppTheme.listTitleUnselectedOpacity))
     }
 }

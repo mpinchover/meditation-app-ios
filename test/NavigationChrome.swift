@@ -34,10 +34,12 @@ private struct NavigationTextBackButtonModifier: ViewModifier {
 #if os(iOS) || os(tvOS) || os(visionOS)
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Back") { dismiss() }
+                        .foregroundStyle(AppTheme.controlPrimary)
                 }
 #else
                 ToolbarItem(placement: .automatic) {
                     Button("Back") { dismiss() }
+                        .foregroundStyle(AppTheme.controlPrimary)
                 }
 #endif
             }

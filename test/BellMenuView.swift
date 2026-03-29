@@ -36,7 +36,7 @@ struct BellMenuView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Bells")
                 .font(.title2.weight(.semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(AppTheme.heroTitle)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 8)
                 .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
@@ -67,6 +67,7 @@ struct BellMenuView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .appThemedScreen()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -150,11 +151,11 @@ struct BellMenuView: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AppTheme.rowLabel)
                     Text(valueLabel)
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AppTheme.rowValue)
                         .multilineTextAlignment(.leading)
                         .lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -162,12 +163,19 @@ struct BellMenuView: View {
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(AppTheme.rowChevron)
             }
             .padding(.vertical, 10)
             .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(AppTheme.cardFill)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                    }
+            }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(title), \(valueLabel)")

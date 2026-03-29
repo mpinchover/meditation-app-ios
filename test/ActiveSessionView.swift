@@ -28,21 +28,21 @@ struct ActiveSessionView: View {
             if player.countdownFinished {
                 Text("Session complete")
                     .font(.title3.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.secondaryText)
             }
 
             Text(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
                 .font(.system(size: 48, weight: .medium, design: .monospaced))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
-                .foregroundStyle(.primary)
+                .foregroundStyle(AppTheme.heroTitle)
                 .accessibilityLabel(player.countdownFinished ? "Time remaining, session complete" : "Time remaining")
                 .accessibilityValue(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
 
             if player.countdownFinished {
                 Text("Soundscape continues until you finish.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.bodyMuted)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }
@@ -63,7 +63,7 @@ struct ActiveSessionView: View {
                     } label: {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 56, weight: .medium))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(AppTheme.controlPrimary)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
@@ -77,12 +77,16 @@ struct ActiveSessionView: View {
                         } label: {
                             Text("Finish")
                                 .font(.body.weight(.semibold))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(AppTheme.heroTitle)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
                                 .background {
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color.gray.opacity(0.32))
+                                        .fill(AppTheme.cardFill)
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                                        }
                                 }
                         }
                         .buttonStyle(.plain)
@@ -95,6 +99,7 @@ struct ActiveSessionView: View {
             .padding(.horizontal)
             .padding(.bottom, Self.controlsBottomInset)
         }
+        .appThemedScreen()
         .navigationBarBackButtonHidden(true)
         .onDisappear {
             if player.sessionActive || player.isPlaying {

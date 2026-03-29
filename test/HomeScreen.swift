@@ -52,10 +52,10 @@ struct HomeScreen: View {
         VStack(spacing: 16) {
             Image(systemName: "waveform.slash")
                 .font(.system(size: 40))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.bodyMuted)
             Text("No sounds loaded")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.bodyMuted)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -71,11 +71,11 @@ struct HomeScreen: View {
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Soundscape")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(AppTheme.rowLabel)
                                 Text(selectedTitle)
                                     .font(.body.weight(.semibold))
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(AppTheme.rowValue)
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(3)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -83,12 +83,19 @@ struct HomeScreen: View {
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(AppTheme.rowChevron)
                         }
                         .padding(.vertical, 10)
                         .padding(.horizontal, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
+                        .background {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(AppTheme.cardFill)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                                }
+                        }
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
@@ -102,22 +109,29 @@ struct HomeScreen: View {
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Duration")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(AppTheme.rowLabel)
                                 Text(ElapsedFormat.sessionCountdown(sessionDurationSeconds))
                                     .font(.body.weight(.semibold))
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(AppTheme.rowValue)
                                     .multilineTextAlignment(.leading)
                             }
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(AppTheme.rowChevron)
                         }
                         .padding(.vertical, 10)
                         .padding(.horizontal, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
+                        .background {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(AppTheme.cardFill)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                                }
+                        }
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
@@ -129,8 +143,8 @@ struct HomeScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
                 Text("Callysto")
-                    .font(.largeTitle.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 34, weight: .semibold, design: .rounded))
+                    .foregroundStyle(AppTheme.heroTitle)
                     .multilineTextAlignment(.center)
                     .position(x: geo.size.width / 2, y: geo.size.height * 0.2)
             }
@@ -157,9 +171,11 @@ struct HomeScreen: View {
                             } label: {
                                 Label("Play", systemImage: "play.circle.fill")
                                     .font(.system(size: Self.playButtonIconSize))
+                                    .foregroundStyle(AppTheme.controlPrimary)
                                     .labelStyle(.iconOnly)
                             }
                             .buttonStyle(.borderless)
+                            .tint(AppTheme.controlPrimary)
                             .disabled(audio.isPlaying || audio.sessionActive)
                             .position(x: playCenterX, y: h / 2)
                             Button {
@@ -168,9 +184,11 @@ struct HomeScreen: View {
                             } label: {
                                 Image(systemName: "line.3.horizontal")
                                     .font(.system(size: 22, weight: .medium))
+                                    .foregroundStyle(AppTheme.controlPrimary)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
                             .buttonStyle(.borderless)
+                            .tint(AppTheme.controlPrimary)
                             .frame(width: Self.menuButtonTapSize, height: Self.menuButtonTapSize)
                             .contentShape(Rectangle())
                             .accessibilityLabel("Bells")
@@ -197,6 +215,7 @@ struct HomeScreen: View {
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .appThemedScreen()
             .animation(.easeInOut(duration: 0.2), value: audio.isPlaying)
             .navigationDestination(isPresented: $showSoundscapePicker) {
                 SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)

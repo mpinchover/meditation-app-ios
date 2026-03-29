@@ -43,7 +43,6 @@ private struct BellPickerList: View {
     let files: [String]
     @Binding var draftFileName: String
     @ObservedObject var preview: BellPreviewPlayer
-    @Environment(\.colorScheme) private var colorScheme
 
     private var sections: [(title: String, files: [String])] {
         BellsCatalog.groupedBellSections(files: files)
@@ -54,7 +53,7 @@ private struct BellPickerList: View {
             Section {
                 Text(screenTitle)
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AppTheme.heroTitle)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
@@ -69,7 +68,7 @@ private struct BellPickerList: View {
                 Section {
                     Text("Add audio under test/assets/bells (subfolders appear as groups in this list).")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.bodyMuted)
                         .listRowInsets(EdgeInsets(top: 8, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 8, trailing: AppScreenChrome.navigationContentHorizontalPadding))
                 }
             } else {
@@ -85,7 +84,7 @@ private struct BellPickerList: View {
                     } header: {
                         Text(section.title)
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondaryText)
                             .textCase(nil)
                     }
                 }
@@ -98,7 +97,8 @@ private struct BellPickerList: View {
 #endif
         .environment(\.defaultMinListRowHeight, 48)
         .contentMargins(.horizontal, 0, for: .scrollContent)
-        .listRowSeparatorTint(Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.1))
+        .listRowSeparatorTint(AppTheme.listSeparator)
+        .appThemedListScreen()
     }
 
     @ViewBuilder
@@ -136,9 +136,9 @@ private struct BellPickerList: View {
 
     private func titleStyle(selected: Bool) -> AnyShapeStyle {
         if selected {
-            return AnyShapeStyle(Color.accentColor)
+            return AnyShapeStyle(AppTheme.selectionAccent)
         }
-        return AnyShapeStyle(Color.primary.opacity(0.62))
+        return AnyShapeStyle(AppTheme.rowValue.opacity(AppTheme.listTitleUnselectedOpacity))
     }
 }
 
@@ -226,15 +226,16 @@ struct IntervalBellSelectionView: View {
                                 in: 1...30,
                                 step: 1
                             )
+                            .tint(AppTheme.selectionAccent)
                         }
                         Text("Every \(draftIntervalMinutes) minutes")
                             .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(AppTheme.rowValue)
                     }
                     .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
                     .padding(.vertical, 16)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.bar)
+                    .background(AppTheme.insetBarBackground)
                 }
             }
             .toolbar {

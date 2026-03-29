@@ -13,7 +13,7 @@ struct PreviewPlayingWaveformView: View {
     var body: some View {
         Image(systemName: "waveform")
             .font(.body.weight(.semibold))
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(AppTheme.selectionAccent)
             .symbolRenderingMode(.hierarchical)
             .symbolEffect(.variableColor.iterative, options: .repeating.speed(0.9), isActive: isActive)
     }
