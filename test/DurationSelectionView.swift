@@ -202,6 +202,12 @@ struct DurationSelectionView: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            Text("Duration")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+                .padding(.top, 4)
 
             VStack(spacing: 8) {
 #if os(iOS) || os(tvOS) || os(visionOS)
@@ -244,7 +250,7 @@ struct DurationSelectionView: View {
 
             Spacer(minLength: 0)
         }
-        .padding()
+        .padding(.vertical)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -253,6 +259,7 @@ struct DurationSelectionView: View {
                 }
             }
         }
+        .navigationTextBackButton()
         .onAppear {
             draftSeconds = max(60, min(Self.maxSeconds, durationSeconds))
         }

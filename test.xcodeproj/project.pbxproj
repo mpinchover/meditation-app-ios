@@ -235,7 +235,6 @@
 /* Begin PBXShellScriptBuildPhase section */
 		FB173F6B2F6F58AB004102AA /* Copy assets preserving folders */ = {
 			isa = PBXShellScriptBuildPhase;
-			basedOnDependencyAnalysis = YES;
 			buildActionMask = 2147483647;
 			files = (
 			);

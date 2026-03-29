@@ -64,7 +64,7 @@ struct SoundscapeSelectionView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
-            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 12, trailing: 20))
+            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.headerHorizontalPadding, bottom: 12, trailing: AppScreenChrome.headerHorizontalPadding))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
@@ -103,6 +103,7 @@ struct SoundscapeSelectionView: View {
                 }
             }
         }
+        .navigationTextBackButton()
         .onAppear {
             draftFileName = selectedFileName
         }
@@ -118,7 +119,7 @@ struct SoundscapeSelectionView: View {
             .textCase(nil)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityAddTraits(.isHeader)
-            .listRowInsets(EdgeInsets(top: isFirstCategory ? 8 : 20, leading: 20, bottom: 4, trailing: 20))
+            .listRowInsets(EdgeInsets(top: isFirstCategory ? 8 : 20, leading: AppScreenChrome.headerHorizontalPadding, bottom: 4, trailing: AppScreenChrome.headerHorizontalPadding))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listSectionSeparator(.hidden)

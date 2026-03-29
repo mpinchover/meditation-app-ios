@@ -38,7 +38,7 @@ struct BellMenuView: View {
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
                 .padding(.top, 4)
                 .padding(.bottom, 12)
 
@@ -62,7 +62,7 @@ struct BellMenuView: View {
                     showIntervalBellPicker = true
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
 
             Spacer(minLength: 0)
         }
@@ -75,6 +75,7 @@ struct BellMenuView: View {
                 }
             }
         }
+        .navigationTextBackButton()
         .navigationDestination(isPresented: $showStartingBellPicker) {
             BellSelectionView(
                 files: bellFiles,
@@ -164,7 +165,7 @@ struct BellMenuView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(.vertical, 10)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
         }

@@ -58,7 +58,7 @@ private struct BellPickerList: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
-            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 12, trailing: 20))
+            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.headerHorizontalPadding, bottom: 12, trailing: AppScreenChrome.headerHorizontalPadding))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
@@ -70,7 +70,7 @@ private struct BellPickerList: View {
                     Text("Add audio under test/assets/bells (subfolders appear as groups in this list).")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowInsets(EdgeInsets(top: 8, leading: AppScreenChrome.headerHorizontalPadding, bottom: 8, trailing: AppScreenChrome.headerHorizontalPadding))
                 }
             } else {
                 ForEach(sections, id: \.title) { section in
@@ -175,6 +175,7 @@ struct BellSelectionView: View {
                     }
                 }
             }
+            .navigationTextBackButton()
             .onAppear {
                 draftFileName = initialFileName
             }
@@ -230,7 +231,7 @@ struct IntervalBellSelectionView: View {
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
                     .padding(.vertical, 16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.bar)
@@ -245,6 +246,7 @@ struct IntervalBellSelectionView: View {
                     }
                 }
             }
+            .navigationTextBackButton()
             .onAppear {
                 draftFileName = initialFileName
                 draftIntervalMinutes = max(1, min(30, initialIntervalMinutes))

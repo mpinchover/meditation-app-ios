@@ -91,7 +91,7 @@ struct HomeScreen: View {
                         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
                     .disabled(audio.isPlaying || audio.sessionActive)
                     .accessibilityLabel("Soundscape, \(selectedTitle)")
                     .accessibilityHint("Opens list to preview and choose a soundscape")
@@ -120,7 +120,7 @@ struct HomeScreen: View {
                         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
                     .disabled(audio.isPlaying || audio.sessionActive)
                     .accessibilityLabel("Duration, \(ElapsedFormat.sessionCountdown(sessionDurationSeconds))")
                     .accessibilityHint("Opens screen to set session length")
