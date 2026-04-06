@@ -1,0 +1,1 @@
+assets folder must be placed under root `test` directory.

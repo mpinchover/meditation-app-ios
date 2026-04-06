@@ -1,5 +1,2 @@
-# Xcode’s file-system sync does not copy gitignored files into the app bundle.
-# Ignore everything under test/assets except soundscapes so local MP3s still ship in the build.
-test/assets/**
-!test/assets/soundscapes/
-!test/assets/soundscapes/**
+# Bundled media stays local — not tracked.
+test/assets/
