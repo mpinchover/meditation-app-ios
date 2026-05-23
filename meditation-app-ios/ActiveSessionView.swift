@@ -39,14 +39,6 @@ struct ActiveSessionView: View {
                 .accessibilityLabel(player.countdownFinished ? "Time remaining, session complete" : "Time remaining")
                 .accessibilityValue(ElapsedFormat.sessionCountdown(player.sessionRemainingSeconds))
 
-            if player.countdownFinished {
-                Text("Soundscape continues until you finish.")
-                    .font(.subheadline)
-                    .foregroundStyle(AppTheme.bodyMuted)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-
             Spacer(minLength: 0)
         }
         .padding()

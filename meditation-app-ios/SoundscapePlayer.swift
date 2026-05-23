@@ -7,6 +7,9 @@
 
 import AVFoundation
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 fileprivate enum PlayerSlot {
     case a, b
@@ -61,6 +64,9 @@ final class SoundscapePlayer: ObservableObject {
 #endif
 
     deinit {
+        if sessionActive {
+            setKeepsScreenAwake(false)
+        }
         pollTimer?.invalidate()
         elapsedTimer?.invalidate()
         engine?.stop()
@@ -121,6 +127,7 @@ final class SoundscapePlayer: ObservableObject {
         tearDownEngine()
         sessionRemainingSeconds = 0
         sessionActive = false
+        setKeepsScreenAwake(false)
         isPlaying = false
         countdownFinished = false
     }
@@ -212,6 +219,7 @@ final class SoundscapePlayer: ObservableObject {
         sessionRemainingSeconds = sessionTotalSeconds
         sessionDurationSeconds = sessionTotalSeconds
         sessionActive = true
+        setKeepsScreenAwake(true)
         countdownFinished = false
         isPlaying = true
 
@@ -343,4 +351,12 @@ final class SoundscapePlayer: ObservableObject {
             self?.handleNodeFinished(slot: other)
         }
     }
+
+#if os(iOS)
+    private func setKeepsScreenAwake(_ keepsAwake: Bool) {
+        UIApplication.shared.isIdleTimerDisabled = keepsAwake
+    }
+#else
+    private func setKeepsScreenAwake(_ keepsAwake: Bool) {}
+#endif
 }
