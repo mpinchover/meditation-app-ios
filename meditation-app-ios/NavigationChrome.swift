@@ -17,6 +17,24 @@ enum AppScreenChrome {
     static let navigationContentHorizontalPadding: CGFloat = 16
 }
 
+/// Screen title as the first `List` row. Hides row separators so nothing appears under the navigation bar.
+struct ListScreenTitleRow: View {
+    let title: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text(title)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(AppTheme.heroTitle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+        }
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 0, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 12, trailing: AppScreenChrome.navigationContentHorizontalPadding))
+        .listRowBackground(Color.clear)
+    }
+}
+
 extension View {
     /// Hides the system back chevron and shows a leading **Back** text button.
     func navigationTextBackButton() -> some View {

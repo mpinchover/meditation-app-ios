@@ -52,29 +52,17 @@ struct SoundscapeSelectionView: View {
 
     var body: some View {
         List {
-            Section {
-                Text("Soundscapes")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(AppTheme.heroTitle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 8)
-            }
-            .listRowInsets(EdgeInsets(top: 4, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 12, trailing: AppScreenChrome.navigationContentHorizontalPadding))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
+            ListScreenTitleRow(title: "Soundscapes")
 
-            Section {
-                noSoundscapeRow()
-            }
+            noSoundscapeRow()
+                .listRowSeparator(.hidden, edges: .top)
 
-            Section {
-                ForEach(files.indices, id: \.self) { index in
-                    soundscapeRow(
-                        file: files[index],
-                        isFirstInSection: index == 0,
-                        isLastInSection: index == files.count - 1
-                    )
-                }
+            ForEach(files.indices, id: \.self) { index in
+                soundscapeRow(
+                    file: files[index],
+                    isFirstInSection: index == 0,
+                    isLastInSection: index == files.count - 1
+                )
             }
         }
 #if os(iOS) || os(tvOS) || os(visionOS)

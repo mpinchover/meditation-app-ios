@@ -61,6 +61,7 @@ extension View {
         self
 #if os(iOS) || os(tvOS) || os(visionOS)
             .scrollContentBackground(.hidden)
+            .listSectionSeparator(.hidden)
 #endif
             .appThemedScreen()
     }
