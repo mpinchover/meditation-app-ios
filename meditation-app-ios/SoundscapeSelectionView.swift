@@ -75,16 +75,11 @@ struct SoundscapeSelectionView: View {
         .environment(\.defaultMinListRowHeight, 48)
         .listRowSeparatorTint(AppTheme.listSeparator)
         .appThemedListScreen()
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    selectedFileName = draftFileName
-                    preview.stop()
-                    dismiss()
-                }
-            }
+        .navigationScreenChrome(trailingTitle: "Save") {
+            selectedFileName = draftFileName
+            preview.stop()
+            dismiss()
         }
-        .navigationTextBackButton()
         .onAppear {
             draftFileName = selectedFileName
         }

@@ -68,15 +68,10 @@ struct BellMenuView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .appThemedScreen()
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    commitDraftsToPersistence()
-                    isPresented = false
-                }
-            }
+        .navigationScreenChrome(trailingTitle: "Save") {
+            commitDraftsToPersistence()
+            isPresented = false
         }
-        .navigationTextBackButton()
         .navigationDestination(isPresented: $showStartingBellPicker) {
             BellSelectionView(
                 files: bellFiles,

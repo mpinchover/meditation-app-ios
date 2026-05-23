@@ -11,9 +11,7 @@ import SwiftUI
 enum AppScreenChrome {
     /// Horizontal inset for the root home layout (no bar-button gutter).
     static let headerHorizontalPadding: CGFloat = 20
-    /// Horizontal inset for content on **pushed** screens. Matches the navigation bar’s leading/trailing
-    /// margin for items like **Back** (~16pt on iPhone). Using 20pt `listRowInsets` here makes list text
-    /// sit **right** of the Back label because bar buttons use the tighter system inset.
+    /// Horizontal inset for content on **pushed** screens and the custom navigation header.
     static let navigationContentHorizontalPadding: CGFloat = 16
 }
 
@@ -36,30 +34,45 @@ struct ListScreenTitleRow: View {
 }
 
 extension View {
+    /// Leading **Back** and optional trailing text action, aligned with `navigationContentHorizontalPadding`.
+    func navigationScreenChrome(
+        trailingTitle: String? = nil,
+        trailingAction: (() -> Void)? = nil
+    ) -> some View {
+        modifier(NavigationScreenChromeModifier(trailingTitle: trailingTitle, trailingAction: trailingAction))
+    }
+
     /// Hides the system back chevron and shows a leading **Back** text button.
     func navigationTextBackButton() -> some View {
-        modifier(NavigationTextBackButtonModifier())
+        navigationScreenChrome()
     }
 }
 
-private struct NavigationTextBackButtonModifier: ViewModifier {
+private struct NavigationScreenChromeModifier: ViewModifier {
     @Environment(\.dismiss) private var dismiss
+    let trailingTitle: String?
+    let trailingAction: (() -> Void)?
 
     func body(content: Content) -> some View {
         content
             .navigationBarBackButtonHidden(true)
-            .toolbar {
-#if os(iOS) || os(tvOS) || os(visionOS)
-                ToolbarItem(placement: .topBarLeading) {
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                HStack {
                     Button("Back") { dismiss() }
                         .foregroundStyle(AppTheme.controlPrimary)
+                        .buttonStyle(.plain)
+                    Spacer(minLength: 0)
+                    if let trailingTitle, let trailingAction {
+                        Button(trailingTitle, action: trailingAction)
+                            .foregroundStyle(AppTheme.controlPrimary)
+                            .buttonStyle(.plain)
+                    }
                 }
-#else
-                ToolbarItem(placement: .automatic) {
-                    Button("Back") { dismiss() }
-                        .foregroundStyle(AppTheme.controlPrimary)
-                }
-#endif
+                .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+                .background(AppTheme.background)
             }
     }
 }

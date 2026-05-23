@@ -142,16 +142,11 @@ struct BellSelectionView: View {
 
     var body: some View {
         BellPickerList(screenTitle: screenTitle, files: files, draftFileName: $draftFileName, preview: preview)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Select") {
-                        onSelect(draftFileName)
-                        preview.stop()
-                        dismiss()
-                    }
-                }
+            .navigationScreenChrome(trailingTitle: "Select") {
+                onSelect(draftFileName)
+                preview.stop()
+                dismiss()
             }
-            .navigationTextBackButton()
             .onAppear {
                 draftFileName = initialFileName
             }
@@ -214,16 +209,11 @@ struct IntervalBellSelectionView: View {
                     .background(AppTheme.insetBarBackground)
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Select") {
-                        onSelect(draftFileName, draftIntervalMinutes)
-                        preview.stop()
-                        dismiss()
-                    }
-                }
+            .navigationScreenChrome(trailingTitle: "Select") {
+                onSelect(draftFileName, draftIntervalMinutes)
+                preview.stop()
+                dismiss()
             }
-            .navigationTextBackButton()
             .onAppear {
                 draftFileName = initialFileName
                 draftIntervalMinutes = max(1, min(30, initialIntervalMinutes))

@@ -254,15 +254,10 @@ struct DurationSelectionView: View {
         }
         .padding(.vertical)
         .appThemedScreen()
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    durationSeconds = max(60, min(Self.maxSeconds, draftSeconds))
-                    dismiss()
-                }
-            }
+        .navigationScreenChrome(trailingTitle: "Save") {
+            durationSeconds = max(60, min(Self.maxSeconds, draftSeconds))
+            dismiss()
         }
-        .navigationTextBackButton()
         .onAppear {
             draftSeconds = max(60, min(Self.maxSeconds, durationSeconds))
         }
