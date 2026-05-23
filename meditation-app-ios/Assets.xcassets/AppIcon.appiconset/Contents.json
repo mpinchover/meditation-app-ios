@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "AppIcon-fixed.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -12,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "AppIcon-fixed 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -23,16 +25,19 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "AppIcon-fixed 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
     },
     {
+      "filename" : "icon-16.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "16x16"
     },
     {
+      "filename" : "icon-32.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "16x16"
