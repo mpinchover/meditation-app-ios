@@ -16,13 +16,11 @@ struct HomeScreen: View {
     @AppStorage("intervalBellMinutes") private var intervalBellMinutes: Int = 5
     @AppStorage("sessionDurationSeconds") private var sessionDurationSeconds: Int = 180
     @State private var showSoundscapePicker = false
-    @State private var showBellPicker = false
-    @State private var bellMenuPresentationSeed = 0
+    @State private var showStartingBellPicker = false
     @State private var showDurationPicker = false
+    @State private var showAccountScreen = false
     @State private var showActiveSession = false
 
-    /// Bottom inset for the play control as a fraction of home layout height (tuned so ~50pt at 812pt reference).
-    private static let homePlayBottomInsetHeightFraction: CGFloat = 50.0 / 812.0
     private static let playButtonIconSize: CGFloat = 88
     private static let menuButtonTapSize: CGFloat = 44
 
@@ -39,6 +37,14 @@ struct HomeScreen: View {
             return "No selection"
         }
         return SoundscapeCatalog.displayTitle(fileName: selectedSoundscapeFile)
+    }
+
+    private var startingBellTitle: String {
+        if startingBellFile.isEmpty {
+            return "None"
+        }
+        guard bellFiles.contains(startingBellFile) else { return "None" }
+        return BellsCatalog.displayTitle(fileName: startingBellFile)
     }
 
     private var timerDisplayText: String {
@@ -62,146 +68,192 @@ struct HomeScreen: View {
     }
 
     private var homeMainVStack: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .topLeading) {
-                VStack(spacing: 12) {
-                    Button {
-                        showSoundscapePicker = true
-                    } label: {
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Soundscape")
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(AppTheme.rowLabel)
-                                Text(selectedTitle)
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(AppTheme.rowValue)
-                                    .multilineTextAlignment(.leading)
-                                    .lineLimit(3)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            Spacer(minLength: 0)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(AppTheme.rowChevron)
-                        }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(AppTheme.cardFill)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
-                                }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
-                    .disabled(audio.isPlaying || audio.sessionActive)
-                    .accessibilityLabel("Soundscape, \(selectedTitle)")
-                    .accessibilityHint("Opens list to preview and choose a soundscape")
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
 
-                    Button {
-                        showDurationPicker = true
-                    } label: {
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Duration")
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(AppTheme.rowLabel)
-                                Text(ElapsedFormat.sessionCountdown(sessionDurationSeconds))
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(AppTheme.rowValue)
-                                    .multilineTextAlignment(.leading)
-                            }
-                            Spacer(minLength: 0)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(AppTheme.rowChevron)
-                        }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(AppTheme.cardFill)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
-                                }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
-                    .disabled(audio.isPlaying || audio.sessionActive)
-                    .accessibilityLabel("Duration, \(ElapsedFormat.sessionCountdown(sessionDurationSeconds))")
-                    .accessibilityHint("Opens screen to set session length")
-                }
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            Text("Callysto")
+                .font(.system(size: 34, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppTheme.heroTitle)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
 
-                Text("Callysto")
-                    .font(.system(size: 34, weight: .semibold, design: .rounded))
-                    .foregroundStyle(AppTheme.heroTitle)
-                    .multilineTextAlignment(.center)
-                    .position(x: geo.size.width / 2, y: geo.size.height * 0.2)
+            Spacer(minLength: 0)
+
+            homeSelectionRows
+
+            Spacer(minLength: 0)
+
+            if !showActiveSession {
+                homePlayControlBar
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !showActiveSession {
-                    GeometryReader { barGeo in
-                        let w = barGeo.size.width
-                        let h = max(barGeo.size.height, Self.playButtonIconSize)
-                        let playCenterX = w / 2
-                        let playTrailingX = playCenterX + Self.playButtonIconSize / 2
-                        // Midpoint between play’s trailing edge and the bar’s trailing edge.
-                        let menuCenterX = playTrailingX + (w - playTrailingX) / 2
-                        ZStack(alignment: .topLeading) {
-                            Color.clear
-                                .frame(width: w, height: h)
-                            Button {
-                                audio.configureSessionDuration(sessionDurationSeconds)
-                                attachSessionBellHandlers()
-                                audio.toggle()
-                                if audio.sessionActive {
-                                    showActiveSession = true
-                                }
-                            } label: {
-                                Label("Play", systemImage: "play.circle.fill")
-                                    .font(.system(size: Self.playButtonIconSize))
-                                    .foregroundStyle(AppTheme.controlPrimary)
-                                    .labelStyle(.iconOnly)
-                            }
-                            .buttonStyle(.borderless)
-                            .tint(AppTheme.controlPrimary)
-                            .disabled(audio.isPlaying || audio.sessionActive)
-                            .position(x: playCenterX, y: h / 2)
-                            Button {
-                                bellMenuPresentationSeed += 1
-                                showBellPicker = true
-                            } label: {
-                                Image(systemName: "line.3.horizontal")
-                                    .font(.system(size: 22, weight: .medium))
-                                    .foregroundStyle(AppTheme.controlPrimary)
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            }
-                            .buttonStyle(.borderless)
-                            .tint(AppTheme.controlPrimary)
-                            .frame(width: Self.menuButtonTapSize, height: Self.menuButtonTapSize)
-                            .contentShape(Rectangle())
-                            .accessibilityLabel("Bells")
-                            .accessibilityHint("Opens bell sounds")
-                            .position(x: menuCenterX, y: h / 2)
-                        }
-                        .frame(width: w, height: h)
-                    }
-                    .frame(height: Self.playButtonIconSize)
-                    .padding(.bottom, geo.size.height * Self.homePlayBottomInsetHeightFraction)
-                }
-            }
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var homeSelectionRows: some View {
+        VStack(spacing: 12) {
+            Button {
+                showSoundscapePicker = true
+            } label: {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Soundscape")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(AppTheme.rowLabel)
+                        Text(selectedTitle)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(AppTheme.rowValue)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.rowChevron)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(AppTheme.cardFill)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                        }
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+            .disabled(audio.isPlaying || audio.sessionActive)
+            .accessibilityLabel("Soundscape, \(selectedTitle)")
+            .accessibilityHint("Opens list to preview and choose a soundscape")
+
+            Button {
+                showDurationPicker = true
+            } label: {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Duration")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(AppTheme.rowLabel)
+                        Text(ElapsedFormat.sessionCountdown(sessionDurationSeconds))
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(AppTheme.rowValue)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.rowChevron)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(AppTheme.cardFill)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                        }
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+            .disabled(audio.isPlaying || audio.sessionActive)
+            .accessibilityLabel("Duration, \(ElapsedFormat.sessionCountdown(sessionDurationSeconds))")
+            .accessibilityHint("Opens screen to set session length")
+
+            Button {
+                showStartingBellPicker = true
+            } label: {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Starting bell")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(AppTheme.rowLabel)
+                        Text(startingBellTitle)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(AppTheme.rowValue)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.rowChevron)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(AppTheme.cardFill)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                        }
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
+            .disabled(audio.isPlaying || audio.sessionActive)
+            .accessibilityLabel("Starting bell, \(startingBellTitle)")
+            .accessibilityHint("Opens list to preview and choose a starting bell")
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var homePlayControlBar: some View {
+        GeometryReader { barGeo in
+            let w = barGeo.size.width
+            let h = max(barGeo.size.height, Self.playButtonIconSize)
+            let playCenterX = w / 2
+            let playTrailingX = playCenterX + Self.playButtonIconSize / 2
+            // Midpoint between play’s trailing edge and the bar’s trailing edge.
+            let menuCenterX = playTrailingX + (w - playTrailingX) / 2
+            ZStack(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: w, height: h)
+                Button {
+                    audio.configureSessionDuration(sessionDurationSeconds)
+                    attachSessionBellHandlers()
+                    audio.toggle()
+                    if audio.sessionActive {
+                        showActiveSession = true
+                    }
+                } label: {
+                    Label("Play", systemImage: "play.circle.fill")
+                        .font(.system(size: Self.playButtonIconSize))
+                        .foregroundStyle(AppTheme.controlPrimary)
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.borderless)
+                .tint(AppTheme.controlPrimary)
+                .disabled(audio.isPlaying || audio.sessionActive)
+                .position(x: playCenterX, y: h / 2)
+                Button {
+                    showAccountScreen = true
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(AppTheme.controlPrimary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .buttonStyle(.borderless)
+                .tint(AppTheme.controlPrimary)
+                .frame(width: Self.menuButtonTapSize, height: Self.menuButtonTapSize)
+                .contentShape(Rectangle())
+                .accessibilityLabel("Account")
+                .accessibilityHint("Opens account")
+                .position(x: menuCenterX, y: h / 2)
+            }
+            .frame(width: w, height: h)
+        }
+        .frame(height: Self.playButtonIconSize)
     }
 
     var body: some View {
@@ -220,12 +272,16 @@ struct HomeScreen: View {
             .navigationDestination(isPresented: $showSoundscapePicker) {
                 SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)
             }
-            .navigationDestination(isPresented: $showBellPicker) {
-                BellMenuView(
-                    bellFiles: bellFiles,
-                    presentationSeed: bellMenuPresentationSeed,
-                    isPresented: $showBellPicker
+            .navigationDestination(isPresented: $showStartingBellPicker) {
+                BellSelectionView(
+                    files: bellFiles,
+                    initialFileName: startingBellFile,
+                    screenTitle: "Starting bell",
+                    onSelect: { startingBellFile = $0 }
                 )
+            }
+            .navigationDestination(isPresented: $showAccountScreen) {
+                AccountScreen()
             }
             .navigationDestination(isPresented: $showDurationPicker) {
                 DurationSelectionView(durationSeconds: $sessionDurationSeconds)
