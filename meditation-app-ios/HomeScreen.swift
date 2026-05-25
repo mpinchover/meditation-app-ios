@@ -21,6 +21,7 @@ struct HomeScreen: View {
     @State private var showDurationPicker = false
     @State private var showAccountScreen = false
     @State private var showActiveSession = false
+    @State private var showInsights = false
 
     private static let playButtonIconSize: CGFloat = 88
     private static let menuButtonTapSize: CGFloat = 44
@@ -125,6 +126,17 @@ struct HomeScreen: View {
             Spacer(minLength: 0)
 
             homeSelectionRows
+
+            Spacer(minLength: 0)
+
+            Button {
+                showInsights = true
+            } label: {
+                Text("Insight")
+                    .font(.body)
+                    .foregroundStyle(AppTheme.rowValue)
+            }
+            .buttonStyle(.plain)
 
             Spacer(minLength: 0)
 
@@ -337,6 +349,10 @@ struct HomeScreen: View {
             }
             .navigationDestination(isPresented: $showActiveSession) {
                 ActiveSessionView(player: audio)
+            }
+            .sheet(isPresented: $showInsights) {
+                InsightsView()
+                    .presentationDetents([.fraction(0.8)])
             }
             .onChange(of: audio.sessionActive) { _, active in
                 if !active {
