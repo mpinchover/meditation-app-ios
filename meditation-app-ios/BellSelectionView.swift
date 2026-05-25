@@ -52,7 +52,7 @@ private struct BellPickerList: View {
                 .listRowSeparator(.hidden, edges: .top)
 
             if files.isEmpty {
-                Text("Add audio under meditation-app-ios/assets/bells.")
+                Text("No bells available.")
                     .font(.footnote)
                     .foregroundStyle(AppTheme.bodyMuted)
                     .listRowInsets(EdgeInsets(top: 8, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 8, trailing: AppScreenChrome.navigationContentHorizontalPadding))

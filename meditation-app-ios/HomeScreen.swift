@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeScreen: View {
     @StateObject private var audio = SoundscapePlayer()
+    @ObservedObject private var soundStore = SoundStore.shared
     @AppStorage("selectedSoundscapeFile") private var selectedSoundscapeFile = ""
     @AppStorage("startingBellFile") private var startingBellFile = ""
     @AppStorage("endingBellFile") private var endingBellFile = ""
@@ -52,6 +53,50 @@ struct HomeScreen: View {
             return ElapsedFormat.sessionCountdown(audio.sessionRemainingSeconds)
         }
         return ElapsedFormat.sessionCountdown(sessionDurationSeconds)
+    }
+
+    private var loadingSoundsView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .tint(AppTheme.bodyMuted)
+            Text("Loading sound library\u{2026}")
+                .font(.body)
+                .foregroundStyle(AppTheme.bodyMuted)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var soundsErrorView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40))
+                .foregroundStyle(AppTheme.bodyMuted)
+            Text(soundStore.error ?? "Could not load sounds.")
+                .font(.body)
+                .foregroundStyle(AppTheme.bodyMuted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            Button {
+                Task { await soundStore.retryDownload() }
+            } label: {
+                Text("Try again")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(AppTheme.heroTitle)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(AppTheme.cardFill)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                            }
+                    }
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var noSoundscapesLoadedView: some View {
@@ -259,7 +304,11 @@ struct HomeScreen: View {
     var body: some View {
         NavigationStack {
             Group {
-                if soundscapeFiles.isEmpty {
+                if soundStore.isLoading {
+                    loadingSoundsView
+                } else if soundStore.error != nil {
+                    soundsErrorView
+                } else if !soundStore.isReady || soundscapeFiles.isEmpty {
                     noSoundscapesLoadedView
                 } else {
                     homeMainVStack
@@ -294,15 +343,16 @@ struct HomeScreen: View {
                     showActiveSession = false
                 }
             }
+            .task {
+                await soundStore.ensureSoundsAvailable()
+            }
             .onAppear {
-                syncSelectionWithCatalog()
-                syncBellSelectionWithCatalog()
-                audio.configureSessionDuration(sessionDurationSeconds)
-                if selectedSoundscapeFile.isEmpty {
-                    audio.clearSoundscape()
-                } else if SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil {
-                    audio.applySoundscape(fileName: selectedSoundscapeFile)
-                }
+                guard soundStore.isReady else { return }
+                initializeAudioState()
+            }
+            .onChange(of: soundStore.isReady) { _, ready in
+                guard ready else { return }
+                initializeAudioState()
             }
             .onChange(of: selectedSoundscapeFile) { _, newValue in
                 if newValue.isEmpty {
@@ -314,6 +364,17 @@ struct HomeScreen: View {
             .onChange(of: sessionDurationSeconds) { _, newValue in
                 audio.configureSessionDuration(newValue)
             }
+        }
+    }
+
+    private func initializeAudioState() {
+        syncSelectionWithCatalog()
+        syncBellSelectionWithCatalog()
+        audio.configureSessionDuration(sessionDurationSeconds)
+        if selectedSoundscapeFile.isEmpty {
+            audio.clearSoundscape()
+        } else if SoundscapeCatalog.urlInBundle(fileName: selectedSoundscapeFile) != nil {
+            audio.applySoundscape(fileName: selectedSoundscapeFile)
         }
     }
 

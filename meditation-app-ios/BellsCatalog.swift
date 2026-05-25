@@ -8,17 +8,15 @@
 import Foundation
 
 enum BellsCatalog {
-    static let rootSubdirectory = "assets/bells"
-
     static func bundledBellFileNames() -> [String] {
-        BundledAssetAudio.relativeAudioPaths(rootSubdirectory: rootSubdirectory)
+        SoundStore.shared.bellFileNames()
     }
 
     static func urlInBundle(fileName: String) -> URL? {
-        BundledAssetAudio.url(relativePath: fileName, rootSubdirectory: rootSubdirectory)
+        SoundStore.shared.bellURL(id: fileName)
     }
 
     static func displayTitle(fileName: String) -> String {
-        BundledAssetAudio.displayTitle(relativePath: fileName)
+        SoundStore.shared.bellDisplayName(id: fileName)
     }
 }

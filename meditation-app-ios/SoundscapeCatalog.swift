@@ -8,17 +8,15 @@
 import Foundation
 
 enum SoundscapeCatalog {
-    static let rootSubdirectory = "assets/soundscapes"
-
     static func bundledSoundscapeFileNames() -> [String] {
-        BundledAssetAudio.relativeAudioPaths(rootSubdirectory: rootSubdirectory)
+        SoundStore.shared.soundscapeFileNames()
     }
 
     static func urlInBundle(fileName: String) -> URL? {
-        BundledAssetAudio.url(relativePath: fileName, rootSubdirectory: rootSubdirectory)
+        SoundStore.shared.soundscapeURL(id: fileName)
     }
 
     static func displayTitle(fileName: String) -> String {
-        BundledAssetAudio.displayTitle(relativePath: fileName)
+        SoundStore.shared.soundscapeDisplayName(id: fileName)
     }
 }
