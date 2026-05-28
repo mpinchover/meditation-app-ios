@@ -17,7 +17,8 @@ struct HomeScreen: View {
     @AppStorage("intervalBellMinutes") private var intervalBellMinutes: Int = 5
     @AppStorage("sessionDurationSeconds") private var sessionDurationSeconds: Int = 180
     @State private var showSoundscapePicker = false
-    @State private var showStartingBellPicker = false
+    @State private var showBellMenu = false
+    @State private var bellMenuPresentationSeed = 0
     @State private var showDurationPicker = false
     @State private var showAccountScreen = false
     @State private var showActiveSession = false
@@ -226,7 +227,8 @@ struct HomeScreen: View {
             .accessibilityHint("Opens screen to set session length")
 
             Button {
-                showStartingBellPicker = true
+                bellMenuPresentationSeed += 1
+                showBellMenu = true
             } label: {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -259,7 +261,7 @@ struct HomeScreen: View {
             .padding(.horizontal, AppScreenChrome.headerHorizontalPadding)
             .disabled(audio.isPlaying || audio.sessionActive)
             .accessibilityLabel("Starting bell, \(startingBellTitle)")
-            .accessibilityHint("Opens list to preview and choose a starting bell")
+            .accessibilityHint("Opens settings to choose session bells")
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -333,13 +335,8 @@ struct HomeScreen: View {
             .navigationDestination(isPresented: $showSoundscapePicker) {
                 SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)
             }
-            .navigationDestination(isPresented: $showStartingBellPicker) {
-                BellSelectionView(
-                    files: bellFiles,
-                    initialFileName: startingBellFile,
-                    screenTitle: "Starting bell",
-                    onSelect: { startingBellFile = $0 }
-                )
+            .navigationDestination(isPresented: $showBellMenu) {
+                BellMenuView(bellFiles: bellFiles, presentationSeed: bellMenuPresentationSeed, isPresented: $showBellMenu)
             }
             .navigationDestination(isPresented: $showAccountScreen) {
                 AccountScreen()
