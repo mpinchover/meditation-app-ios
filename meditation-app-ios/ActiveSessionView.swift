@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Full-screen session: countdown, optional bells, then soundscape continues until Finish.
 struct ActiveSessionView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var player: SoundscapePlayer
 
     /// Shown after the timer hits 0:00, or any time the user pauses (so they can end early).
@@ -94,6 +95,8 @@ struct ActiveSessionView: View {
         .appThemedScreen()
         .navigationBarBackButtonHidden(true)
         .onDisappear {
+            // SwiftUI can fire onDisappear when the app backgrounds; only finish on real navigation away.
+            guard scenePhase == .active else { return }
             if player.sessionActive || player.isPlaying {
                 player.finish()
             }

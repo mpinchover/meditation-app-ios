@@ -46,30 +46,48 @@ final class SoundscapePlayer: ObservableObject {
     private var elapsedTimer: Timer?
     private var resumeA = false
     private var resumeB = false
+    private var sessionCountdownEndDate: Date?
+    private var interruptionObserver: NSObjectProtocol?
 
     init() {
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
         configureAudioSessionForPlayback()
+        registerForAudioSessionNotifications()
 #endif
     }
-
-#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-    private func configureAudioSessionForPlayback() {
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try session.setActive(true, options: [])
-        } catch { }
-    }
-#endif
 
     deinit {
+        if let interruptionObserver {
+            NotificationCenter.default.removeObserver(interruptionObserver)
+        }
         if sessionActive {
             setKeepsScreenAwake(false)
         }
         pollTimer?.invalidate()
         elapsedTimer?.invalidate()
         engine?.stop()
+    }
+
+    func handleScenePhase(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            syncCountdownFromWallClock()
+#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+            if sessionActive, isPlaying {
+                configureAudioSessionForPlayback()
+                resumeEngineIfNeeded()
+            }
+#endif
+        case .inactive, .background:
+#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+            if sessionActive, isPlaying {
+                configureAudioSessionForPlayback()
+                resumeEngineIfNeeded()
+            }
+#endif
+        @unknown default:
+            break
+        }
     }
 
     /// Call when the user picks a file; does nothing while playing. Rebuilds engine on next play.
@@ -126,6 +144,7 @@ final class SoundscapePlayer: ObservableObject {
         SessionBellPlayback.stopAll()
         tearDownEngine()
         sessionRemainingSeconds = 0
+        sessionCountdownEndDate = nil
         sessionActive = false
         setKeepsScreenAwake(false)
         isPlaying = false
@@ -138,6 +157,8 @@ final class SoundscapePlayer: ObservableObject {
 
         if slot == primary {
             primary = (slot == .a) ? .b : .a
+            let nextIdle: PlayerSlot = slot
+            scheduleCrossfade(from: primary, to: nextIdle)
         }
     }
 
@@ -203,6 +224,9 @@ final class SoundscapePlayer: ObservableObject {
     }
 
     private func startPlayback() {
+#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+        configureAudioSessionForPlayback()
+#endif
         if sessionActive {
             resumeFromPause()
         } else {
@@ -218,6 +242,7 @@ final class SoundscapePlayer: ObservableObject {
 
         sessionRemainingSeconds = sessionTotalSeconds
         sessionDurationSeconds = sessionTotalSeconds
+        sessionCountdownEndDate = Date().addingTimeInterval(TimeInterval(sessionTotalSeconds))
         sessionActive = true
         setKeepsScreenAwake(true)
         countdownFinished = false
@@ -242,6 +267,7 @@ final class SoundscapePlayer: ObservableObject {
                 scheduleFullFile(on: .a) { [weak self] in
                     self?.handleNodeFinished(slot: .a)
                 }
+                scheduleCrossfade(from: .a, to: .b)
                 startPolling()
             }
         }
@@ -262,6 +288,36 @@ final class SoundscapePlayer: ObservableObject {
         n.play()
     }
 
+    /// Pre-schedules the next loop segment so crossfades continue while the app is backgrounded.
+    private func scheduleCrossfade(from source: PlayerSlot, to dest: PlayerSlot) {
+        guard fileDuration > Self.crossfadeLeadSeconds else { return }
+        guard slotStartDates[dest] == nil else { return }
+        guard let sourceNode = node(for: source),
+              let destNode = node(for: dest),
+              let destFile = file(for: dest) else { return }
+
+        let sampleRate = destFile.processingFormat.sampleRate
+        let crossfadeFrame = AVAudioFramePosition((fileDuration - Self.crossfadeLeadSeconds) * sampleRate)
+
+        let startTime: AVAudioTime
+        if let nodeTime = sourceNode.lastRenderTime,
+           let playerTime = sourceNode.playerTime(forNodeTime: nodeTime) {
+            let startFrame = playerTime.sampleTime + max(0, crossfadeFrame - playerTime.sampleTime)
+            startTime = AVAudioTime(sampleTime: startFrame, atRate: sampleRate)
+        } else {
+            startTime = AVAudioTime(sampleTime: crossfadeFrame, atRate: sampleRate)
+        }
+
+        destFile.framePosition = 0
+        slotStartDates[dest] = Date().addingTimeInterval(fileDuration - Self.crossfadeLeadSeconds)
+
+        destNode.scheduleFile(destFile, at: startTime) { [weak self] in
+            DispatchQueue.main.async {
+                self?.handleNodeFinished(slot: dest)
+            }
+        }
+    }
+
     private func pausePlayback() {
         resumeA = slotStartDates[.a] != nil
         resumeB = slotStartDates[.b] != nil
@@ -272,13 +328,12 @@ final class SoundscapePlayer: ObservableObject {
         pollTimer?.invalidate()
         pollTimer = nil
         stopSessionCountdownTimer()
+        syncCountdownFromWallClock()
         isPlaying = false
     }
 
     private func resumeFromPause() {
-        if let eng = engine, !eng.isRunning {
-            try? eng.start()
-        }
+        resumeEngineIfNeeded()
 
         if resumeA { nodeA?.play() }
         if resumeB { nodeB?.play() }
@@ -289,7 +344,15 @@ final class SoundscapePlayer: ObservableObject {
             startPolling()
         }
         if !countdownFinished, sessionRemainingSeconds > 0 {
+            sessionCountdownEndDate = Date().addingTimeInterval(TimeInterval(sessionRemainingSeconds))
             startSessionCountdownTimer()
+        }
+    }
+
+    private func resumeEngineIfNeeded() {
+        guard let eng = engine else { return }
+        if !eng.isRunning {
+            try? eng.start()
         }
     }
 
@@ -297,26 +360,38 @@ final class SoundscapePlayer: ObservableObject {
         stopSessionCountdownTimer()
         guard !countdownFinished else { return }
         let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self, self.isPlaying else { return }
-            if self.countdownFinished { return }
-
-            if self.sessionRemainingSeconds > 0 {
-                self.sessionRemainingSeconds -= 1
-            }
-            self.onCountdownTick?(self.sessionRemainingSeconds, self.sessionTotalSeconds)
-
-            if self.sessionRemainingSeconds <= 0 {
-                self.completeNaturalCountdown()
-            }
+            self?.tickSessionCountdown()
         }
         RunLoop.main.add(t, forMode: .common)
         elapsedTimer = t
+    }
+
+    private func tickSessionCountdown() {
+        guard isPlaying, !countdownFinished else { return }
+        syncCountdownFromWallClock()
+    }
+
+    private func syncCountdownFromWallClock() {
+        guard let endDate = sessionCountdownEndDate, !countdownFinished else { return }
+
+        let previous = sessionRemainingSeconds
+        let remaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
+        sessionRemainingSeconds = remaining
+
+        if remaining != previous {
+            onCountdownTick?(remaining, sessionTotalSeconds)
+        }
+
+        if remaining <= 0 {
+            completeNaturalCountdown()
+        }
     }
 
     private func completeNaturalCountdown() {
         guard !countdownFinished else { return }
         countdownFinished = true
         sessionRemainingSeconds = 0
+        sessionCountdownEndDate = nil
         stopSessionCountdownTimer()
         onNaturalCountdownComplete?()
     }
@@ -350,7 +425,50 @@ final class SoundscapePlayer: ObservableObject {
         scheduleFullFile(on: other) { [weak self] in
             self?.handleNodeFinished(slot: other)
         }
+        scheduleCrossfade(from: other, to: primary)
     }
+
+#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+    private func configureAudioSessionForPlayback() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+        } catch { }
+    }
+
+    private func registerForAudioSessionNotifications() {
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleAudioSessionInterruption(notification)
+        }
+    }
+
+    private func handleAudioSessionInterruption(_ notification: Notification) {
+        guard
+            let userInfo = notification.userInfo,
+            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue)
+        else { return }
+
+        switch type {
+        case .began:
+            break
+        case .ended:
+            let options = (userInfo[AVAudioSessionInterruptionOptionKey] as? UInt)
+                .flatMap { AVAudioSession.InterruptionOptions(rawValue: $0) }
+            let shouldResume = options?.contains(.shouldResume) ?? true
+            guard shouldResume, sessionActive, isPlaying else { return }
+            configureAudioSessionForPlayback()
+            resumeEngineIfNeeded()
+        @unknown default:
+            break
+        }
+    }
+#endif
 
 #if os(iOS)
     private func setKeepsScreenAwake(_ keepsAwake: Bool) {

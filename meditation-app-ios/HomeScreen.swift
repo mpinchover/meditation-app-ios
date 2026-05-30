@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HomeScreen: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var audio = SoundscapePlayer()
     @ObservedObject private var soundStore = SoundStore.shared
     @AppStorage("selectedSoundscapeFile") private var selectedSoundscapeFile = ""
@@ -355,6 +356,9 @@ struct HomeScreen: View {
                 if !active {
                     showActiveSession = false
                 }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                audio.handleScenePhase(phase)
             }
             .task {
                 await soundStore.ensureSoundsAvailable()
