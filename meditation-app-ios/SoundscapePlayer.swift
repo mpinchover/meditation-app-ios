@@ -158,7 +158,13 @@ final class SoundscapePlayer: ObservableObject {
         if slot == primary {
             primary = (slot == .a) ? .b : .a
             let nextIdle: PlayerSlot = slot
-            scheduleCrossfade(from: primary, to: nextIdle)
+            if fileDuration > Self.crossfadeLeadSeconds {
+                scheduleCrossfade(from: primary, to: nextIdle)
+            } else {
+                scheduleFullFile(on: nextIdle) { [weak self] in
+                    self?.handleNodeFinished(slot: nextIdle)
+                }
+            }
         }
     }
 
@@ -316,6 +322,7 @@ final class SoundscapePlayer: ObservableObject {
                 self?.handleNodeFinished(slot: dest)
             }
         }
+        destNode.play()
     }
 
     private func pausePlayback() {
