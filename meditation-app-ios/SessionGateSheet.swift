@@ -6,27 +6,34 @@
 import SwiftUI
 import AuthenticationServices
 
-/// Shown when an unauthenticated user tries to start a session after the free trial expires.
+/// Auth sheet used both as a free-trial gate and as a direct sign-in/sign-up entry point.
 struct SessionGateSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    /// Called after a successful sign-in or sign-up so the caller can start the pending session.
+    /// Called after a successful sign-in or sign-up.
     let onAuthenticated: () -> Void
+    /// When `true`, hide the "Not now" button (used when the user navigates here intentionally).
+    let showNotNow: Bool
 
-    @State private var isSignUp = false
+    @State private var isSignUp: Bool
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    init(onAuthenticated: @escaping () -> Void, startInSignUp: Bool = false, showNotNow: Bool = true) {
+        self.onAuthenticated = onAuthenticated
+        self.showNotNow = showNotNow
+        self._isSignUp = State(initialValue: startInSignUp)
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 28) {
-                headerSection
-                socialAuthSection
-                orDivider
                 emailPasswordSection
+                orDivider
+                socialAuthSection
                 toggleModeButton
                 notNowButton
             }
@@ -40,25 +47,6 @@ struct SessionGateSheet: View {
     }
 
     // MARK: - Sections
-
-    private var headerSection: some View {
-        VStack(spacing: 10) {
-            Text(isSignUp ? "Create account" : "Continue meditating")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(AppTheme.heroTitle)
-                .multilineTextAlignment(.center)
-                .animation(.none, value: isSignUp)
-
-            Text(isSignUp
-                 ? "Create a free account to keep meditating."
-                 : "You've used your free \(AppConstants.freeTrialLimitMinutes) \(AppConstants.freeTrialLimitMinutes == 1 ? "minute" : "minutes"). Log in or sign up to continue.")
-                .font(.body)
-                .foregroundStyle(AppTheme.secondaryText)
-                .multilineTextAlignment(.center)
-                .animation(.none, value: isSignUp)
-        }
-        .padding(.top, 8)
-    }
 
     private var socialAuthSection: some View {
         VStack(spacing: 12) {
@@ -205,14 +193,17 @@ struct SessionGateSheet: View {
         .buttonStyle(.plain)
     }
 
+    @ViewBuilder
     private var notNowButton: some View {
-        Button("Not now") {
-            dismiss()
+        if showNotNow {
+            Button("Not now") {
+                dismiss()
+            }
+            .font(.body)
+            .foregroundStyle(AppTheme.bodyMuted)
+            .buttonStyle(.plain)
+            .padding(.top, 4)
         }
-        .font(.body)
-        .foregroundStyle(AppTheme.bodyMuted)
-        .buttonStyle(.plain)
-        .padding(.top, 4)
     }
 
     // MARK: - Auth handlers
@@ -274,6 +265,10 @@ struct SessionGateSheet: View {
     }
 }
 
-#Preview {
+#Preview("Gate (trial expired)") {
     SessionGateSheet(onAuthenticated: {})
+}
+
+#Preview("Sign up") {
+    SessionGateSheet(onAuthenticated: {}, startInSignUp: true, showNotNow: false)
 }

@@ -9,62 +9,77 @@ import SwiftUI
 
 struct AccountScreen: View {
     @ObservedObject private var usageStore = SessionUsageStore.shared
+    @State private var showSignIn = false
+    @State private var showSignUp = false
 
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer(minLength: 0)
-
+        Group {
             if usageStore.isAuthenticated {
                 authenticatedContent
             } else {
                 unauthenticatedContent
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .appThemedScreen()
         .navigationTextBackButton()
+        .sheet(isPresented: $showSignIn) {
+            SessionGateSheet(onAuthenticated: {
+                showSignIn = false
+            }, startInSignUp: false, showNotNow: false)
+        }
+        .sheet(isPresented: $showSignUp) {
+            SessionGateSheet(onAuthenticated: {
+                showSignUp = false
+            }, startInSignUp: true, showNotNow: false)
+        }
     }
+
+    // MARK: - Unauthenticated
+
+    private var unauthenticatedContent: some View {
+        VStack(spacing: 16) {
+            Spacer(minLength: 0)
+            authButton(title: "Sign in") { showSignIn = true }
+            authButton(title: "Sign up") { showSignUp = true }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Authenticated
 
     private var authenticatedContent: some View {
         VStack(spacing: 20) {
-            Text("Account")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(AppTheme.heroTitle)
-
+            Spacer(minLength: 0)
             usageStat
-
-            Button {
+            authButton(title: "Log out") {
                 SessionUsageStore.shared.setAuthenticated(false)
-            } label: {
-                Text("Log out")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(AppTheme.heroTitle)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(AppTheme.cardFill)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
-                            }
-                    }
             }
-            .buttonStyle(.plain)
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 24)
     }
 
-    private var unauthenticatedContent: some View {
-        VStack(spacing: 12) {
-            Text("Not signed in")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(AppTheme.heroTitle)
+    // MARK: - Shared
 
-            usageStat
+    private func authButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(AppTheme.heroTitle)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(AppTheme.cardFill)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
+                        }
+                }
         }
+        .buttonStyle(.plain)
     }
 
     private var usageStat: some View {
