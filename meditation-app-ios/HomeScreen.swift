@@ -132,17 +132,6 @@ struct HomeScreen: View {
 
             Spacer(minLength: 0)
 
-            Button {
-                showInsights = true
-            } label: {
-                Text("Insight")
-                    .font(.body)
-                    .foregroundStyle(AppTheme.rowValue)
-            }
-            .buttonStyle(.plain)
-
-            Spacer(minLength: 0)
-
             if !showActiveSession {
                 homePlayControlBar
             }
@@ -269,21 +258,38 @@ struct HomeScreen: View {
     }
 
     private var homePlayControlBar: some View {
-        Button {
-            if usageStore.requiresAuthenticationBeforeNewSession {
-                showSessionGate = true
-            } else {
-                startSession()
+        HStack(spacing: 0) {
+            // Mirror of the right slot — keeps the play button centred in the full width.
+            Color.clear
+                .frame(maxWidth: .infinity)
+
+            Button {
+                if usageStore.requiresAuthenticationBeforeNewSession {
+                    showSessionGate = true
+                } else {
+                    startSession()
+                }
+            } label: {
+                Label("Play", systemImage: "play.circle.fill")
+                    .font(.system(size: Self.playButtonIconSize))
+                    .foregroundStyle(AppTheme.controlPrimary)
+                    .labelStyle(.iconOnly)
             }
-        } label: {
-            Label("Play", systemImage: "play.circle.fill")
-                .font(.system(size: Self.playButtonIconSize))
-                .foregroundStyle(AppTheme.controlPrimary)
-                .labelStyle(.iconOnly)
+            .buttonStyle(.borderless)
+            .tint(AppTheme.controlPrimary)
+            .disabled(audio.isPlaying || audio.sessionActive)
+
+            // Right slot: lightbulb centred between play button and screen edge.
+            Button {
+                showInsights = true
+            } label: {
+                Image(systemName: "lightbulb")
+                    .font(.system(size: 22, weight: .light))
+                    .foregroundStyle(AppTheme.bodyMuted)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderless)
-        .tint(AppTheme.controlPrimary)
-        .disabled(audio.isPlaying || audio.sessionActive)
         .frame(maxWidth: .infinity)
         .frame(height: Self.playButtonIconSize)
     }
