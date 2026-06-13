@@ -29,6 +29,9 @@ final class SoundscapePlayer: ObservableObject {
     var onSessionStarted: (() -> Void)?
     var onCountdownTick: ((_ remaining: Int, _ total: Int) -> Void)?
     var onNaturalCountdownComplete: (() -> Void)?
+    /// Called at the moment `finish()` is invoked, before any state is reset.
+    /// The argument is the number of seconds that elapsed during the session.
+    var onSessionFinished: ((Int) -> Void)?
 
     private static let crossfadeLeadSeconds = 10.0
     private var sessionTotalSeconds: Int = 180
@@ -138,9 +141,12 @@ final class SoundscapePlayer: ObservableObject {
     }
 
     func finish() {
+        let elapsed = sessionDurationSeconds - sessionRemainingSeconds
         onSessionStarted = nil
         onCountdownTick = nil
         onNaturalCountdownComplete = nil
+        onSessionFinished?(elapsed)
+        onSessionFinished = nil
         SessionBellPlayback.stopAll()
         tearDownEngine()
         sessionRemainingSeconds = 0
@@ -382,7 +388,7 @@ final class SoundscapePlayer: ObservableObject {
         guard let endDate = sessionCountdownEndDate, !countdownFinished else { return }
 
         let previous = sessionRemainingSeconds
-        let remaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
+        let remaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.up)))
         sessionRemainingSeconds = remaining
 
         if remaining != previous {

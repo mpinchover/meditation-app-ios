@@ -11,6 +11,7 @@ struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var audio = SoundscapePlayer()
     @ObservedObject private var soundStore = SoundStore.shared
+    @ObservedObject private var usageStore = SessionUsageStore.shared
     @AppStorage("selectedSoundscapeFile") private var selectedSoundscapeFile = ""
     @AppStorage("startingBellFile") private var startingBellFile = ""
     @AppStorage("endingBellFile") private var endingBellFile = ""
@@ -24,6 +25,7 @@ struct HomeScreen: View {
     @State private var showAccountScreen = false
     @State private var showActiveSession = false
     @State private var showInsights = false
+    @State private var showSessionGate = false
 
     private static let playButtonIconSize: CGFloat = 88
 
@@ -268,11 +270,10 @@ struct HomeScreen: View {
 
     private var homePlayControlBar: some View {
         Button {
-            audio.configureSessionDuration(sessionDurationSeconds)
-            attachSessionBellHandlers()
-            audio.toggle()
-            if audio.sessionActive {
-                showActiveSession = true
+            if usageStore.requiresAuthenticationBeforeNewSession {
+                showSessionGate = true
+            } else {
+                startSession()
             }
         } label: {
             Label("Play", systemImage: "play.circle.fill")
@@ -328,6 +329,16 @@ struct HomeScreen: View {
             .sheet(isPresented: $showInsights) {
                 InsightsView()
                     .presentationDetents([.fraction(0.8)])
+            }
+            .sheet(isPresented: $showSessionGate, onDismiss: {
+                // If the sheet was dismissed after successful auth, start the pending session.
+                if !usageStore.requiresAuthenticationBeforeNewSession {
+                    startSession()
+                }
+            }) {
+                SessionGateSheet(onAuthenticated: {
+                    showSessionGate = false
+                })
             }
             .onChange(of: audio.sessionActive) { _, active in
                 if !active {
@@ -404,6 +415,15 @@ struct HomeScreen: View {
         if intervalBellMinutes > 30 { intervalBellMinutes = 30 }
     }
 
+    private func startSession() {
+        audio.configureSessionDuration(sessionDurationSeconds)
+        attachSessionBellHandlers()
+        audio.toggle()
+        if audio.sessionActive {
+            showActiveSession = true
+        }
+    }
+
     /// Wires one-shot bells for this session. Interval chimes never fire on the final tick (`remaining == 0`); the ending bell plays there if selected, so they do not overlap.
     private func attachSessionBellHandlers() {
         let start = startingBellFile
@@ -428,6 +448,9 @@ struct HomeScreen: View {
             if !end.isEmpty {
                 SessionBellPlayback.play(fileName: end)
             }
+        }
+        audio.onSessionFinished = { elapsed in
+            SessionUsageStore.shared.recordCompletedSession(elapsedSeconds: elapsed)
         }
     }
 }
