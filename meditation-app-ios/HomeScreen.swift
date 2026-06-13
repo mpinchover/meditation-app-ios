@@ -26,7 +26,6 @@ struct HomeScreen: View {
     @State private var showInsights = false
 
     private static let playButtonIconSize: CGFloat = 88
-    private static let menuButtonTapSize: CGFloat = 44
 
     private var soundscapeFiles: [String] {
         SoundscapeCatalog.bundledSoundscapeFileNames()
@@ -268,51 +267,23 @@ struct HomeScreen: View {
     }
 
     private var homePlayControlBar: some View {
-        GeometryReader { barGeo in
-            let w = barGeo.size.width
-            let h = max(barGeo.size.height, Self.playButtonIconSize)
-            let playCenterX = w / 2
-            let playTrailingX = playCenterX + Self.playButtonIconSize / 2
-            // Midpoint between play’s trailing edge and the bar’s trailing edge.
-            let menuCenterX = playTrailingX + (w - playTrailingX) / 2
-            ZStack(alignment: .topLeading) {
-                Color.clear
-                    .frame(width: w, height: h)
-                Button {
-                    audio.configureSessionDuration(sessionDurationSeconds)
-                    attachSessionBellHandlers()
-                    audio.toggle()
-                    if audio.sessionActive {
-                        showActiveSession = true
-                    }
-                } label: {
-                    Label("Play", systemImage: "play.circle.fill")
-                        .font(.system(size: Self.playButtonIconSize))
-                        .foregroundStyle(AppTheme.controlPrimary)
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.borderless)
-                .tint(AppTheme.controlPrimary)
-                .disabled(audio.isPlaying || audio.sessionActive)
-                .position(x: playCenterX, y: h / 2)
-                Button {
-                    showAccountScreen = true
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(AppTheme.controlPrimary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .buttonStyle(.borderless)
-                .tint(AppTheme.controlPrimary)
-                .frame(width: Self.menuButtonTapSize, height: Self.menuButtonTapSize)
-                .contentShape(Rectangle())
-                .accessibilityLabel("Account")
-                .accessibilityHint("Opens account")
-                .position(x: menuCenterX, y: h / 2)
+        Button {
+            audio.configureSessionDuration(sessionDurationSeconds)
+            attachSessionBellHandlers()
+            audio.toggle()
+            if audio.sessionActive {
+                showActiveSession = true
             }
-            .frame(width: w, height: h)
+        } label: {
+            Label("Play", systemImage: "play.circle.fill")
+                .font(.system(size: Self.playButtonIconSize))
+                .foregroundStyle(AppTheme.controlPrimary)
+                .labelStyle(.iconOnly)
         }
+        .buttonStyle(.borderless)
+        .tint(AppTheme.controlPrimary)
+        .disabled(audio.isPlaying || audio.sessionActive)
+        .frame(maxWidth: .infinity)
         .frame(height: Self.playButtonIconSize)
     }
 
@@ -332,6 +303,12 @@ struct HomeScreen: View {
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .appThemedScreen()
+            .homeScreenTopChrome(
+                trailingSystemImage: "line.3.horizontal",
+                trailingAccessibilityLabel: "Account"
+            ) {
+                showAccountScreen = true
+            }
             .animation(.easeInOut(duration: 0.2), value: audio.isPlaying)
             .navigationDestination(isPresented: $showSoundscapePicker) {
                 SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)

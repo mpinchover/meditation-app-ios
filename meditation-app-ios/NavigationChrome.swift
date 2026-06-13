@@ -46,6 +46,49 @@ extension View {
     func navigationTextBackButton() -> some View {
         navigationScreenChrome()
     }
+
+    /// Trailing icon on the root home screen (no back button).
+    func homeScreenTopChrome(
+        trailingSystemImage: String,
+        trailingAccessibilityLabel: String,
+        trailingAction: @escaping () -> Void
+    ) -> some View {
+        modifier(HomeScreenTopChromeModifier(
+            trailingSystemImage: trailingSystemImage,
+            trailingAccessibilityLabel: trailingAccessibilityLabel,
+            trailingAction: trailingAction
+        ))
+    }
+}
+
+private struct HomeScreenTopChromeModifier: ViewModifier {
+    let trailingSystemImage: String
+    let trailingAccessibilityLabel: String
+    let trailingAction: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                HStack {
+                    Spacer(minLength: 0)
+                    Button(action: trailingAction) {
+                        Image(systemName: trailingSystemImage)
+                            .font(.system(size: 22, weight: .medium))
+                    }
+                    .foregroundStyle(AppTheme.controlPrimary)
+                    .buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel(trailingAccessibilityLabel)
+                    .accessibilityHint("Opens account")
+                }
+                .padding(.horizontal, AppScreenChrome.navigationContentHorizontalPadding)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+                .background(AppTheme.background)
+            }
+    }
 }
 
 private struct NavigationScreenChromeModifier: ViewModifier {
