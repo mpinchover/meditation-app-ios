@@ -283,8 +283,8 @@ struct HomeScreen: View {
             Button {
                 showInsights = true
             } label: {
-                Image(systemName: "lightbulb")
-                    .font(.system(size: 22, weight: .light))
+                Image(systemName: "lightbulb.circle")
+                    .font(.system(size: 28, weight: .light))
                     .foregroundStyle(AppTheme.bodyMuted)
             }
             .buttonStyle(.plain)

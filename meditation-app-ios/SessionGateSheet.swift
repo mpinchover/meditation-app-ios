@@ -5,6 +5,8 @@
 
 import SwiftUI
 import AuthenticationServices
+import CryptoKit
+import FirebaseAuth
 
 /// Auth sheet used both as a free-trial gate and as a direct sign-in/sign-up entry point.
 struct SessionGateSheet: View {
@@ -21,6 +23,9 @@ struct SessionGateSheet: View {
     @State private var confirmPassword = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var currentNonce: String?
+    @State private var googleAuthSession: ASWebAuthenticationSession?
+    @State private var googlePresentationContext = GooglePresentationContext()
 
     init(onAuthenticated: @escaping () -> Void, startInSignUp: Bool = false, showNotNow: Bool = true) {
         self.onAuthenticated = onAuthenticated
@@ -51,7 +56,10 @@ struct SessionGateSheet: View {
     private var socialAuthSection: some View {
         VStack(spacing: 12) {
             SignInWithAppleButton(.signIn, onRequest: { request in
+                let nonce = makeAppleNonce()
+                currentNonce = nonce
                 request.requestedScopes = [.fullName, .email]
+                request.nonce = sha256Hex(nonce)
             }, onCompletion: handleAppleSignIn)
             .signInWithAppleButtonStyle(.white)
             .frame(height: 50)
@@ -211,9 +219,30 @@ struct SessionGateSheet: View {
     private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let auth):
-            guard auth.credential is ASAuthorizationAppleIDCredential else { return }
-            // TODO: forward identityToken to backend for server-side verification
-            completeAuthentication()
+            guard let credential = auth.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken,
+                  let idToken = String(data: tokenData, encoding: .utf8),
+                  let nonce = currentNonce else {
+                errorMessage = "Apple Sign In failed. Please try again."
+                return
+            }
+            isLoading = true
+            errorMessage = nil
+            let firebaseCredential = OAuthProvider.appleCredential(
+                withIDToken: idToken,
+                rawNonce: nonce,
+                fullName: credential.fullName
+            )
+            Task { @MainActor in
+                do {
+                    try await Auth.auth().signIn(with: firebaseCredential)
+                    isLoading = false
+                    completeAuthentication()
+                } catch {
+                    isLoading = false
+                    errorMessage = "Apple Sign In failed. Please try again."
+                }
+            }
         case .failure(let error):
             let nsError = error as NSError
             guard nsError.code != ASAuthorizationError.canceled.rawValue else { return }
@@ -221,12 +250,132 @@ struct SessionGateSheet: View {
         }
     }
 
+    // Random nonce for Apple Sign In (alphanumeric charset matching Firebase docs)
+    private func makeAppleNonce() -> String {
+        let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var bytes = [UInt8](repeating: 0, count: 32)
+        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return String(bytes.map { charset[Int($0) % charset.count] })
+    }
+
+    // SHA-256 as a lowercase hex string — required format for Apple's nonce field
+    private func sha256Hex(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8))
+            .compactMap { String(format: "%02x", $0) }
+            .joined()
+    }
+
     private func handleGoogleSignIn() {
-        // TODO: Configure Google OAuth 2.0:
-        //   1. Create a project in Google Cloud Console and generate an iOS OAuth client ID.
-        //   2. Add the reversed client ID as a URL scheme in the project's Info.plist.
-        //   3. Replace this stub with an ASWebAuthenticationSession flow using that client ID.
-        errorMessage = "Google Sign In is not configured yet."
+        // Values from GoogleService-Info.plist
+        let clientID = "535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii.apps.googleusercontent.com"
+        let callbackScheme = "com.googleusercontent.apps.535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii"
+        let redirectURI = "\(callbackScheme):/"
+
+        let verifier = makePKCEVerifier()
+        let challenge = makePKCEChallenge(for: verifier)
+
+        var components = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth")!
+        components.queryItems = [
+            URLQueryItem(name: "client_id", value: clientID),
+            URLQueryItem(name: "redirect_uri", value: redirectURI),
+            URLQueryItem(name: "response_type", value: "code"),
+            URLQueryItem(name: "scope", value: "openid email profile"),
+            URLQueryItem(name: "code_challenge", value: challenge),
+            URLQueryItem(name: "code_challenge_method", value: "S256"),
+        ]
+        guard let authURL = components.url else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        let session = ASWebAuthenticationSession(
+            url: authURL,
+            callbackURLScheme: callbackScheme
+        ) { callbackURL, error in
+            Task { @MainActor in
+                googleAuthSession = nil
+
+                if let error {
+                    isLoading = false
+                    if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin {
+                        errorMessage = "Google Sign In failed. Please try again."
+                    }
+                    return
+                }
+
+                guard let callbackURL,
+                      let code = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
+                          .queryItems?.first(where: { $0.name == "code" })?.value else {
+                    isLoading = false
+                    errorMessage = "Google Sign In failed. Please try again."
+                    return
+                }
+
+                do {
+                    let (idToken, accessToken) = try await exchangeGoogleCode(
+                        code, verifier: verifier, clientID: clientID, redirectURI: redirectURI
+                    )
+                    let credential = GoogleAuthProvider.credential(
+                        withIDToken: idToken, accessToken: accessToken
+                    )
+                    try await Auth.auth().signIn(with: credential)
+                    isLoading = false
+                    completeAuthentication()
+                } catch {
+                    isLoading = false
+                    errorMessage = "Google Sign In failed. Please try again."
+                }
+            }
+        }
+        session.presentationContextProvider = googlePresentationContext
+        session.prefersEphemeralWebBrowserSession = false
+        googleAuthSession = session
+        session.start()
+    }
+
+    private func makePKCEVerifier() -> String {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return Data(bytes).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    private func makePKCEChallenge(for verifier: String) -> String {
+        let hash = SHA256.hash(data: Data(verifier.utf8))
+        return Data(hash).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    private func exchangeGoogleCode(
+        _ code: String, verifier: String, clientID: String, redirectURI: String
+    ) async throws -> (idToken: String, accessToken: String) {
+        var request = URLRequest(url: URL(string: "https://oauth2.googleapis.com/token")!)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let allowed = CharacterSet.urlQueryAllowed
+        request.httpBody = [
+            "client_id": clientID,
+            "code": code,
+            "code_verifier": verifier,
+            "grant_type": "authorization_code",
+            "redirect_uri": redirectURI,
+        ]
+        .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: allowed) ?? $0.value)" }
+        .joined(separator: "&")
+        .data(using: .utf8)
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+
+        struct TokenResponse: Decodable {
+            let id_token: String
+            let access_token: String
+        }
+        let decoded = try JSONDecoder().decode(TokenResponse.self, from: data)
+        return (decoded.id_token, decoded.access_token)
     }
 
     private func handleEmailAuth() {
@@ -262,6 +411,17 @@ struct SessionGateSheet: View {
     private func completeAuthentication() {
         SessionUsageStore.shared.setAuthenticated(true)
         onAuthenticated()
+    }
+}
+
+// Provides the window anchor that ASWebAuthenticationSession needs to present the OAuth sheet.
+// Stored as @State so SwiftUI keeps it alive across view body re-evaluations.
+private final class GooglePresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .compactMap { $0.keyWindow }
+            .first ?? ASPresentationAnchor()
     }
 }
 

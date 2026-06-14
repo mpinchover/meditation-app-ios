@@ -6,5 +6,16 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
