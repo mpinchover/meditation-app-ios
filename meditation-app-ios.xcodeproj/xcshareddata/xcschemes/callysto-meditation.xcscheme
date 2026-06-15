@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FB173F3E2F6F58AA004102AA"
-               BuildableName = "meditation-app-ios.app"
-               BlueprintName = "meditation-app-ios"
+               BuildableName = "callysto-meditation.app"
+               BlueprintName = "callysto-meditation"
                ReferencedContainer = "container:meditation-app-ios.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -36,8 +36,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FB173F4C2F6F58AB004102AA"
-               BuildableName = "meditation-app-iosTests.xctest"
-               BlueprintName = "meditation-app-iosTests"
+               BuildableName = "callysto-meditationTests.xctest"
+               BlueprintName = "callysto-meditationTests"
                ReferencedContainer = "container:meditation-app-ios.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -47,8 +47,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FB173F562F6F58AB004102AA"
-               BuildableName = "meditation-app-iosUITests.xctest"
-               BlueprintName = "meditation-app-iosUITests"
+               BuildableName = "callysto-meditationUITests.xctest"
+               BlueprintName = "callysto-meditationUITests"
                ReferencedContainer = "container:meditation-app-ios.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -69,8 +69,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FB173F3E2F6F58AA004102AA"
-            BuildableName = "meditation-app-ios.app"
-            BlueprintName = "meditation-app-ios"
+            BuildableName = "callysto-meditation.app"
+            BlueprintName = "callysto-meditation"
             ReferencedContainer = "container:meditation-app-ios.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -86,8 +86,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FB173F3E2F6F58AA004102AA"
-            BuildableName = "meditation-app-ios.app"
-            BlueprintName = "meditation-app-ios"
+            BuildableName = "callysto-meditation.app"
+            BlueprintName = "callysto-meditation"
             ReferencedContainer = "container:meditation-app-ios.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

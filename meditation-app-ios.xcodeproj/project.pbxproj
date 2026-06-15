@@ -17,21 +17,21 @@
 			containerPortal = FB173F372F6F58AA004102AA /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FB173F3E2F6F58AA004102AA;
-			remoteInfo = "meditation-app-ios";
+			remoteInfo = "callysto-meditation";
 		};
 		FB173F582F6F58AB004102AA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FB173F372F6F58AA004102AA /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FB173F3E2F6F58AA004102AA;
-			remoteInfo = "meditation-app-ios";
+			remoteInfo = "callysto-meditation";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		FB173F3F2F6F58AA004102AA /* meditation-app-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "meditation-app-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB173F4D2F6F58AB004102AA /* meditation-app-iosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "meditation-app-iosTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB173F572F6F58AB004102AA /* meditation-app-iosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "meditation-app-iosUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB173F3F2F6F58AA004102AA /* meditation-app-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "callysto-meditation.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB173F4D2F6F58AB004102AA /* meditation-app-iosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "callysto-meditationTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB173F572F6F58AB004102AA /* meditation-app-iosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "callysto-meditationUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -118,12 +118,12 @@
 			fileSystemSynchronizedGroups = (
 				FB173F412F6F58AA004102AA /* meditation-app-ios */,
 			);
-			name = "meditation-app-ios";
+			name = "callysto-meditation";
 			packageProductDependencies = (
 				FB8744712FDE22DC008904E1 /* FirebaseAuth */,
 				FB8744732FDE22DC008904E1 /* FirebaseCore */,
 			);
-			productName = "meditation-app-ios";
+			productName = "callysto-meditation";
 			productReference = FB173F3F2F6F58AA004102AA /* meditation-app-ios.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -143,10 +143,10 @@
 			fileSystemSynchronizedGroups = (
 				FB173F502F6F58AB004102AA /* meditation-app-iosTests */,
 			);
-			name = "meditation-app-iosTests";
+			name = "callysto-meditationTests";
 			packageProductDependencies = (
 			);
-			productName = "meditation-app-iosTests";
+			productName = "callysto-meditationTests";
 			productReference = FB173F4D2F6F58AB004102AA /* meditation-app-iosTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -166,10 +166,10 @@
 			fileSystemSynchronizedGroups = (
 				FB173F5A2F6F58AB004102AA /* meditation-app-iosUITests */,
 			);
-			name = "meditation-app-iosUITests";
+			name = "callysto-meditationUITests";
 			packageProductDependencies = (
 			);
-			productName = "meditation-app-iosUITests";
+			productName = "callysto-meditationUITests";
 			productReference = FB173F572F6F58AB004102AA /* meditation-app-iosUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
@@ -259,12 +259,12 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/meditation-app-ios-bundled-assets.stamp",
+				"$(DERIVED_FILE_DIR)/callysto-meditation-bundled-assets.stamp",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/assets",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nASSETS_SRC=\"${SRCROOT}/meditation-app-ios/assets\"\nDEST_ROOT=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nASSETS_DST=\"${DEST_ROOT}/assets\"\nmkdir -p \"${DEST_ROOT}\"\nrm -rf \"${ASSETS_DST}\"\n/usr/bin/ditto \"${ASSETS_SRC}\" \"${ASSETS_DST}\"\ntouch \"${DERIVED_FILE_DIR}/meditation-app-ios-bundled-assets.stamp\"\n";
+			shellScript = "set -e\nASSETS_SRC=\"${SRCROOT}/meditation-app-ios/assets\"\nDEST_ROOT=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nASSETS_DST=\"${DEST_ROOT}/assets\"\nmkdir -p \"${DEST_ROOT}\"\nrm -rf \"${ASSETS_DST}\"\n/usr/bin/ditto \"${ASSETS_SRC}\" \"${ASSETS_DST}\"\ntouch \"${DERIVED_FILE_DIR}/callysto-meditation-bundled-assets.stamp\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -534,7 +534,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/meditation-app-ios.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/meditation-app-ios";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/callysto-meditation.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/callysto-meditation";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
@@ -557,7 +557,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/meditation-app-ios.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/meditation-app-ios";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/callysto-meditation.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/callysto-meditation";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
@@ -579,7 +579,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = "meditation-app-ios";
+				TEST_TARGET_NAME = "callysto-meditation";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
@@ -601,7 +601,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = "meditation-app-ios";
+				TEST_TARGET_NAME = "callysto-meditation";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
