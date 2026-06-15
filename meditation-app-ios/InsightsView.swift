@@ -7,6 +7,7 @@ struct InsightsView: View {
     var body: some View {
         Group {
             if store.isLoading && store.current == nil {
+                // Fetching with nothing cached yet — show spinner
                 VStack(spacing: 16) {
                     ProgressView()
                         .progressViewStyle(.circular)
@@ -33,13 +34,16 @@ struct InsightsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
+                // No cache and fetch failed (or not yet started)
                 VStack(spacing: 16) {
                     Image(systemName: "lightbulb.slash")
                         .font(.system(size: 40))
                         .foregroundStyle(AppTheme.bodyMuted)
-                    Text("No insight available today.")
+                    Text(store.fetchError ?? "No insight available.")
                         .font(.body)
                         .foregroundStyle(AppTheme.bodyMuted)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -60,6 +64,7 @@ struct InsightsView: View {
             .padding(.top, 24)
             .padding(.trailing, 24)
         }
+        // Fallback: start loading if not already underway (e.g. deep-linked directly to this sheet)
         .task {
             await store.loadInsight()
         }

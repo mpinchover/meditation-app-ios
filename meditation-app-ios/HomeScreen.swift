@@ -353,6 +353,9 @@ struct HomeScreen: View {
             }
             .onChange(of: scenePhase) { _, phase in
                 audio.handleScenePhase(phase)
+                if phase == .active {
+                    Task { await InsightStore.shared.loadInsight() }
+                }
             }
             .task {
                 await soundStore.ensureSoundsAvailable()

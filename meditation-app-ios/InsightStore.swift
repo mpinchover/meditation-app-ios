@@ -13,7 +13,8 @@ final class InsightStore: ObservableObject {
 
     @Published private(set) var isLoading = false
     @Published private(set) var current: CachedInsight?
-    @Published private(set) var error: String?
+    /// Set only when a fetch fails AND there is no cached insight to fall back on.
+    @Published private(set) var fetchError: String?
 
     private let fm = FileManager.default
 
@@ -26,31 +27,49 @@ final class InsightStore: ObservableObject {
             .appendingPathComponent("insight.json")
     }
 
+    /// Loads cached insight, then fetches from the server if the cached one is stale or missing.
+    /// Safe to call multiple times — concurrent calls are ignored while a fetch is in flight.
     func loadInsight() async {
-        let cached = loadFromDisk()
-        current = cached
+        // Populate from disk on first call
+        if current == nil {
+            current = loadFromDisk()
+        }
 
-        let cal = Calendar.current
-        let today = cal.dateComponents([.month, .day], from: Date())
-        let todayMonth = today.month ?? 1
-        let todayDate = today.day ?? 1
+        // UTC date components
+        let (todayMonth, todayDay) = utcMonthDay()
 
-        if let cached, cached.month == todayMonth, cached.date == todayDate {
+        // Already have today's insight — nothing to do
+        if let current, current.month == todayMonth, current.date == todayDay {
             return
         }
 
+        // Prevent duplicate in-flight fetches
+        guard !isLoading else { return }
+
         isLoading = true
-        error = nil
 
         do {
-            let fetched = try await fetchFromServer(month: todayMonth, date: todayDate)
+            let fetched = try await fetchFromServer(month: todayMonth, date: todayDay)
             current = fetched
+            fetchError = nil
             saveToDisk(fetched)
         } catch {
-            self.error = error.localizedDescription
+            // If we already have a cached insight, silently keep it and don't surface the error.
+            if current == nil {
+                fetchError = "Could not load today's insight."
+            }
         }
 
         isLoading = false
+    }
+
+    // MARK: - Helpers
+
+    private func utcMonthDay() -> (month: Int, day: Int) {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC")!
+        let c = cal.dateComponents([.month, .day], from: Date())
+        return (c.month ?? 1, c.day ?? 1)
     }
 
     private func loadFromDisk() -> CachedInsight? {
