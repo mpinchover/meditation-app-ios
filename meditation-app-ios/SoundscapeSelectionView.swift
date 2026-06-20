@@ -38,42 +38,25 @@ private final class SoundscapePreviewPlayer: ObservableObject {
 }
 
 struct SoundscapeSelectionView: View {
-    let files: [String]
     @Binding var selectedFileName: String
+    @ObservedObject private var soundStore = SoundStore.shared
     @State private var draftFileName: String
     @StateObject private var preview = SoundscapePreviewPlayer()
     @Environment(\.dismiss) private var dismiss
 
-    init(files: [String], selectedFileName: Binding<String>) {
-        self.files = files
+    init(selectedFileName: Binding<String>) {
         self._selectedFileName = selectedFileName
         _draftFileName = State(initialValue: selectedFileName.wrappedValue)
     }
 
     var body: some View {
-        List {
-            ListScreenTitleRow(title: "Soundscapes")
-
-            noSoundscapeRow()
-                .listRowSeparator(.hidden, edges: .top)
-
-            ForEach(files.indices, id: \.self) { index in
-                soundscapeRow(
-                    file: files[index],
-                    isFirstInSection: index == 0,
-                    isLastInSection: index == files.count - 1
-                )
+        Group {
+            if soundStore.needsInitialCatalogLoad {
+                catalogLoadingView
+            } else {
+                soundscapeList
             }
         }
-#if os(iOS) || os(tvOS) || os(visionOS)
-        .listStyle(.plain)
-        /// Pulls section content toward the `List` edges so it reads wider (less gap vs. the list’s bounds).
-        .contentMargins(.horizontal, 0, for: .scrollContent)
-#else
-        .listStyle(.inset)
-#endif
-        .environment(\.defaultMinListRowHeight, 48)
-        .listRowSeparatorTint(AppTheme.listSeparator)
         .appThemedListScreen()
         .navigationScreenChrome(trailingTitle: "Save") {
             selectedFileName = draftFileName
@@ -82,20 +65,61 @@ struct SoundscapeSelectionView: View {
         }
         .onAppear {
             draftFileName = selectedFileName
+            soundStore.ensureSoundsAvailable()
         }
         .onDisappear {
             preview.stop()
         }
     }
 
+    private var catalogLoadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .tint(AppTheme.bodyMuted)
+            Text("Loading soundscapes\u{2026}")
+                .font(.body)
+                .foregroundStyle(AppTheme.bodyMuted)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var soundscapeList: some View {
+        List {
+            ListScreenTitleRow(title: "Soundscapes")
+
+            noSoundscapeRow()
+                .listRowSeparator(.hidden, edges: .top)
+
+            ForEach(soundStore.soundscapeSummaries) { summary in
+                let index = soundStore.soundscapeSummaries.firstIndex(where: { $0.id == summary.id }) ?? 0
+                soundscapeRow(
+                    summary: summary,
+                    isFirstInSection: index == 0,
+                    isLastInSection: index == soundStore.soundscapeSummaries.count - 1
+                )
+            }
+        }
+#if os(iOS) || os(tvOS) || os(visionOS)
+        .listStyle(.plain)
+        .contentMargins(.horizontal, 0, for: .scrollContent)
+#else
+        .listStyle(.inset)
+#endif
+        .environment(\.defaultMinListRowHeight, 48)
+        .listRowSeparatorTint(AppTheme.listSeparator)
+    }
+
     @ViewBuilder
-    private func soundscapeRow(file: String, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
+    private func soundscapeRow(summary: SoundSummary, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
+        let file = summary.id
         let isSelected = draftFileName == file
         let isPlaying = preview.playingFileName == file
         SelectableSoundRow(
-            title: SoundscapeCatalog.displayTitle(fileName: file),
+            title: summary.name,
             isSelected: isSelected,
             isPlaying: isPlaying,
+            isDownloading: isSoundDownloading(file),
             titleStyle: titleStyle(selected: isSelected),
             showTopSeparator: !isFirstInSection,
             showBottomSeparator: !isLastInSection
@@ -118,6 +142,13 @@ struct SoundscapeSelectionView: View {
         ) {
             draftFileName = ""
             preview.stop()
+        }
+    }
+
+    private func isSoundDownloading(_ id: String) -> Bool {
+        switch soundStore.downloadState(for: id) {
+        case .pending, .downloading: return true
+        case .downloaded, nil: return false
         }
     }
 

@@ -48,7 +48,6 @@ struct HomeScreen: View {
         if startingBellFile.isEmpty {
             return "None"
         }
-        guard bellFiles.contains(startingBellFile) else { return "None" }
         return BellsCatalog.displayTitle(fileName: startingBellFile)
     }
 
@@ -59,59 +58,14 @@ struct HomeScreen: View {
         return ElapsedFormat.sessionCountdown(sessionDurationSeconds)
     }
 
-    private var loadingSoundsView: some View {
+    private var noSoundscapesLoadedView: some View {
         VStack(spacing: 16) {
             ProgressView()
                 .progressViewStyle(.circular)
                 .tint(AppTheme.bodyMuted)
-            Text("Loading sound library\u{2026}")
+            Text("Loading sounds\u{2026}")
                 .font(.body)
                 .foregroundStyle(AppTheme.bodyMuted)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var soundsErrorView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 40))
-                .foregroundStyle(AppTheme.bodyMuted)
-            Text(soundStore.error ?? "Could not load sounds.")
-                .font(.body)
-                .foregroundStyle(AppTheme.bodyMuted)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-            Button {
-                Task { await soundStore.retryDownload() }
-            } label: {
-                Text("Try again")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(AppTheme.heroTitle)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(AppTheme.cardFill)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .strokeBorder(AppTheme.cardStroke, lineWidth: 1)
-                            }
-                    }
-            }
-            .buttonStyle(.plain)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var noSoundscapesLoadedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "waveform.slash")
-                .font(.system(size: 40))
-                .foregroundStyle(AppTheme.bodyMuted)
-            Text("No sounds loaded")
-                .font(.body)
-                .foregroundStyle(AppTheme.bodyMuted)
-                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -297,11 +251,7 @@ struct HomeScreen: View {
     var body: some View {
         NavigationStack {
             Group {
-                if soundStore.isLoading {
-                    loadingSoundsView
-                } else if soundStore.error != nil {
-                    soundsErrorView
-                } else if !soundStore.isReady || soundscapeFiles.isEmpty {
+                if soundStore.needsInitialCatalogLoad {
                     noSoundscapesLoadedView
                 } else {
                     homeMainVStack
@@ -318,10 +268,10 @@ struct HomeScreen: View {
             }
             .animation(.easeInOut(duration: 0.2), value: audio.isPlaying)
             .navigationDestination(isPresented: $showSoundscapePicker) {
-                SoundscapeSelectionView(files: soundscapeFiles, selectedFileName: $selectedSoundscapeFile)
+                SoundscapeSelectionView(selectedFileName: $selectedSoundscapeFile)
             }
             .navigationDestination(isPresented: $showBellMenu) {
-                BellMenuView(bellFiles: bellFiles, presentationSeed: bellMenuPresentationSeed, isPresented: $showBellMenu)
+                BellMenuView(presentationSeed: bellMenuPresentationSeed, isPresented: $showBellMenu)
             }
             .navigationDestination(isPresented: $showAccountScreen) {
                 AccountScreen()
@@ -355,18 +305,28 @@ struct HomeScreen: View {
                 audio.handleScenePhase(phase)
                 if phase == .active {
                     Task { await InsightStore.shared.loadInsight() }
+                    soundStore.ensureSoundsAvailable()
                 }
             }
-            .task {
-                await soundStore.ensureSoundsAvailable()
-            }
             .onAppear {
-                guard soundStore.isReady else { return }
-                initializeAudioState()
+                soundStore.ensureSoundsAvailable()
+                if soundStore.isReady {
+                    initializeAudioState()
+                }
             }
             .onChange(of: soundStore.isReady) { _, ready in
                 guard ready else { return }
                 initializeAudioState()
+            }
+            .onChange(of: soundStore.catalogRevision) { _, _ in
+                guard soundStore.isReady else { return }
+                syncSelectionWithCatalog()
+                syncBellSelectionWithCatalog()
+            }
+            .onChange(of: soundStore.isRemoteCatalogLoaded) { _, loaded in
+                guard loaded else { return }
+                syncSelectionWithCatalog()
+                syncBellSelectionWithCatalog()
             }
             .onChange(of: selectedSoundscapeFile) { _, newValue in
                 if newValue.isEmpty {

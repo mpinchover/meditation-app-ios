@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct BellMenuView: View {
-    let bellFiles: [String]
     /// Increments each time the user opens this screen from home; used to reload drafts from persisted storage without clobbering drafts when popping back from a child picker.
     let presentationSeed: Int
     /// Tied to `navigationDestination(isPresented:)` on home; set `false` after Save so the stack returns reliably.
@@ -74,7 +73,6 @@ struct BellMenuView: View {
         }
         .navigationDestination(isPresented: $showStartingBellPicker) {
             BellSelectionView(
-                files: bellFiles,
                 initialFileName: draftStartingBellFile,
                 screenTitle: "Starting bell",
                 onSelect: { draftStartingBellFile = $0 }
@@ -82,7 +80,6 @@ struct BellMenuView: View {
         }
         .navigationDestination(isPresented: $showEndingBellPicker) {
             BellSelectionView(
-                files: bellFiles,
                 initialFileName: draftEndingBellFile,
                 screenTitle: "Ending bell",
                 onSelect: { draftEndingBellFile = $0 }
@@ -90,7 +87,6 @@ struct BellMenuView: View {
         }
         .navigationDestination(isPresented: $showIntervalBellPicker) {
             IntervalBellSelectionView(
-                files: bellFiles,
                 initialFileName: draftIntervalBellFile,
                 initialIntervalMinutes: draftIntervalBellMinutes,
                 onSelect: { file, minutes in
@@ -137,7 +133,6 @@ struct BellMenuView: View {
 
     private func displaySubtitle(for file: String) -> String {
         if file.isEmpty { return "No selection" }
-        guard bellFiles.contains(file) else { return "No selection" }
         return BellsCatalog.displayTitle(fileName: file)
     }
 

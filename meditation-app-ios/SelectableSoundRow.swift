@@ -11,10 +11,31 @@ struct SelectableSoundRow: View {
     let title: String
     let isSelected: Bool
     let isPlaying: Bool
+    let isDownloading: Bool
     let titleStyle: AnyShapeStyle
     let showTopSeparator: Bool
     let showBottomSeparator: Bool
     let onTap: () -> Void
+
+    init(
+        title: String,
+        isSelected: Bool,
+        isPlaying: Bool,
+        isDownloading: Bool = false,
+        titleStyle: AnyShapeStyle,
+        showTopSeparator: Bool,
+        showBottomSeparator: Bool,
+        onTap: @escaping () -> Void
+    ) {
+        self.title = title
+        self.isSelected = isSelected
+        self.isPlaying = isPlaying
+        self.isDownloading = isDownloading
+        self.titleStyle = titleStyle
+        self.showTopSeparator = showTopSeparator
+        self.showBottomSeparator = showBottomSeparator
+        self.onTap = onTap
+    }
 
     var body: some View {
         Button(action: onTap) {
@@ -31,9 +52,14 @@ struct SelectableSoundRow: View {
                     Color.clear.frame(width: 32, height: 32)
                     if isPlaying {
                         PreviewPlayingWaveformView(isActive: isPlaying)
+                    } else if isDownloading {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .tint(AppTheme.bodyMuted)
+                            .scaleEffect(0.85)
                     }
                 }
-                .accessibilityHidden(!isPlaying)
+                .accessibilityHidden(!isPlaying && !isDownloading)
             }
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
             .padding(.vertical, 2)
@@ -45,4 +71,5 @@ struct SelectableSoundRow: View {
         .listRowSeparator(showBottomSeparator ? .visible : .hidden, edges: .bottom)
         .listRowSeparator(showTopSeparator ? .visible : .hidden, edges: .top)
     }
+
 }

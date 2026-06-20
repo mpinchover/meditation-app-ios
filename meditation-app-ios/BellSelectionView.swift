@@ -40,30 +40,42 @@ final class BellPreviewPlayer: ObservableObject {
 
 private struct BellPickerList: View {
     let screenTitle: String
-    let files: [String]
     @Binding var draftFileName: String
     @ObservedObject var preview: BellPreviewPlayer
+    @ObservedObject private var soundStore = SoundStore.shared
 
     var body: some View {
+        Group {
+            if soundStore.needsInitialCatalogLoad {
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(AppTheme.bodyMuted)
+                    Text("Loading bells\u{2026}")
+                        .font(.body)
+                        .foregroundStyle(AppTheme.bodyMuted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                bellList
+            }
+        }
+    }
+
+    private var bellList: some View {
         List {
             ListScreenTitleRow(title: screenTitle)
 
             noBellRow()
                 .listRowSeparator(.hidden, edges: .top)
 
-            if files.isEmpty {
-                Text("No bells available.")
-                    .font(.footnote)
-                    .foregroundStyle(AppTheme.bodyMuted)
-                    .listRowInsets(EdgeInsets(top: 8, leading: AppScreenChrome.navigationContentHorizontalPadding, bottom: 8, trailing: AppScreenChrome.navigationContentHorizontalPadding))
-            } else {
-                ForEach(files.indices, id: \.self) { index in
-                    bellRow(
-                        file: files[index],
-                        isFirstInSection: index == 0,
-                        isLastInSection: index == files.count - 1
-                    )
-                }
+            ForEach(soundStore.bellSummaries) { summary in
+                let index = soundStore.bellSummaries.firstIndex(where: { $0.id == summary.id }) ?? 0
+                bellRow(
+                    summary: summary,
+                    isFirstInSection: index == 0,
+                    isLastInSection: index == soundStore.bellSummaries.count - 1
+                )
             }
         }
 #if os(iOS) || os(tvOS) || os(visionOS)
@@ -94,19 +106,28 @@ private struct BellPickerList: View {
     }
 
     @ViewBuilder
-    private func bellRow(file: String, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
+    private func bellRow(summary: SoundSummary, isFirstInSection: Bool, isLastInSection: Bool) -> some View {
+        let file = summary.id
         let isSelected = draftFileName == file
         let isPlaying = preview.playingFileName == file
         SelectableSoundRow(
-            title: BellsCatalog.displayTitle(fileName: file),
+            title: summary.name,
             isSelected: isSelected,
             isPlaying: isPlaying,
+            isDownloading: isSoundDownloading(file),
             titleStyle: titleStyle(selected: isSelected),
             showTopSeparator: !isFirstInSection,
             showBottomSeparator: !isLastInSection
         ) {
             draftFileName = file
             preview.play(fileName: file)
+        }
+    }
+
+    private func isSoundDownloading(_ id: String) -> Bool {
+        switch soundStore.downloadState(for: id) {
+        case .pending, .downloading: return true
+        case .downloaded, nil: return false
         }
     }
 
@@ -122,7 +143,6 @@ private struct BellPickerList: View {
 
 struct BellSelectionView: View {
     let screenTitle: String
-    let files: [String]
     /// Current menu draft when this screen is opened (re-read each presentation).
     let initialFileName: String
     /// Prefer this over `Binding` through `navigationDestination` — parent `@State` updates are unreliable there.
@@ -132,16 +152,15 @@ struct BellSelectionView: View {
     @StateObject private var preview = BellPreviewPlayer()
     @Environment(\.dismiss) private var dismiss
 
-    init(files: [String], initialFileName: String, screenTitle: String, onSelect: @escaping (String) -> Void) {
+    init(initialFileName: String, screenTitle: String, onSelect: @escaping (String) -> Void) {
         self.screenTitle = screenTitle
-        self.files = files
         self.initialFileName = initialFileName
         self.onSelect = onSelect
         _draftFileName = State(initialValue: initialFileName)
     }
 
     var body: some View {
-        BellPickerList(screenTitle: screenTitle, files: files, draftFileName: $draftFileName, preview: preview)
+        BellPickerList(screenTitle: screenTitle, draftFileName: $draftFileName, preview: preview)
             .navigationScreenChrome(trailingTitle: "Select") {
                 onSelect(draftFileName)
                 preview.stop()
@@ -149,6 +168,7 @@ struct BellSelectionView: View {
             }
             .onAppear {
                 draftFileName = initialFileName
+                SoundStore.shared.ensureSoundsAvailable()
             }
             .onDisappear {
                 preview.stop()
@@ -159,7 +179,6 @@ struct BellSelectionView: View {
 // MARK: - Interval bell (catalog + minutes)
 
 struct IntervalBellSelectionView: View {
-    let files: [String]
     let initialFileName: String
     let initialIntervalMinutes: Int
     let onSelect: (String, Int) -> Void
@@ -170,12 +189,10 @@ struct IntervalBellSelectionView: View {
     @Environment(\.dismiss) private var dismiss
 
     init(
-        files: [String],
         initialFileName: String,
         initialIntervalMinutes: Int,
         onSelect: @escaping (String, Int) -> Void
     ) {
-        self.files = files
         self.initialFileName = initialFileName
         self.initialIntervalMinutes = initialIntervalMinutes
         self.onSelect = onSelect
@@ -184,7 +201,7 @@ struct IntervalBellSelectionView: View {
     }
 
     var body: some View {
-        BellPickerList(screenTitle: "Interval bell", files: files, draftFileName: $draftFileName, preview: preview)
+        BellPickerList(screenTitle: "Interval bell", draftFileName: $draftFileName, preview: preview)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if !draftFileName.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
@@ -217,6 +234,7 @@ struct IntervalBellSelectionView: View {
             .onAppear {
                 draftFileName = initialFileName
                 draftIntervalMinutes = max(1, min(30, initialIntervalMinutes))
+                SoundStore.shared.ensureSoundsAvailable()
             }
             .onDisappear {
                 preview.stop()

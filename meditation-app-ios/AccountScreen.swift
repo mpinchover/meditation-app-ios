@@ -33,13 +33,13 @@ struct AccountScreen: View {
             SessionGateSheet(onAuthenticated: {
                 showSignIn = false
                 dismiss()
-            }, startInSignUp: false, showNotNow: false)
+            }, startInSignUp: false)
         }
         .sheet(isPresented: $showSignUp) {
             SessionGateSheet(onAuthenticated: {
                 showSignUp = false
                 dismiss()
-            }, startInSignUp: true, showNotNow: false)
+            }, startInSignUp: true)
         }
     }
 

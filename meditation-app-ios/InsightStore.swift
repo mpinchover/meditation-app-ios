@@ -19,7 +19,7 @@ final class InsightStore: ObservableObject {
     private let fm = FileManager.default
 
     private static let serverBaseURL =
-        "https://meditate-now-server-535943965628.us-central1.run.app"
+        "https://callysto-server-724373166676.us-central1.run.app"
 
     private var cacheFile: URL {
         fm.urls(for: .documentDirectory, in: .userDomainMask)[0]

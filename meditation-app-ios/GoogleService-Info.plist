@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii.apps.googleusercontent.com</string>
+	<string>724373166676-5o4tiei3c3jdpsbbq5m8qisdpmaglkfc.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii</string>
+	<string>com.googleusercontent.apps.724373166676-5o4tiei3c3jdpsbbq5m8qisdpmaglkfc</string>
 	<key>API_KEY</key>
-	<string>AIzaSyBy-uY-F1hJPh4OGrLj3b3LKHj6xIbWnA4</string>
+	<string>AIzaSyA91al_gKK96JC7OLyrQ0PYG9XUqm5f9jU</string>
 	<key>GCM_SENDER_ID</key>
-	<string>535943965628</string>
+	<string>724373166676</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.meditationapp.meditation-app-ios</string>
+	<string>callysto</string>
 	<key>PROJECT_ID</key>
-	<string>meditate-now-495918</string>
+	<string>callysto-6286f</string>
 	<key>STORAGE_BUCKET</key>
-	<string>meditate-now-495918.firebasestorage.app</string>
+	<string>callysto-6286f.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:535943965628:ios:173fae9d6dc491a4b8d9b9</string>
+	<string>1:724373166676:ios:59d66c2e2c22cfa2e4abc1</string>
 </dict>
 </plist>

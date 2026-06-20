@@ -10,12 +10,8 @@ import FirebaseAuth
 
 /// Auth sheet used both as a free-trial gate and as a direct sign-in/sign-up entry point.
 struct SessionGateSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
     /// Called after a successful sign-in or sign-up.
     let onAuthenticated: () -> Void
-    /// When `true`, hide the "Not now" button (used when the user navigates here intentionally).
-    let showNotNow: Bool
 
     @State private var isSignUp: Bool
     @State private var email = ""
@@ -27,9 +23,8 @@ struct SessionGateSheet: View {
     @State private var googleAuthSession: ASWebAuthenticationSession?
     @State private var googlePresentationContext = GooglePresentationContext()
 
-    init(onAuthenticated: @escaping () -> Void, startInSignUp: Bool = false, showNotNow: Bool = true) {
+    init(onAuthenticated: @escaping () -> Void, startInSignUp: Bool = false) {
         self.onAuthenticated = onAuthenticated
-        self.showNotNow = showNotNow
         self._isSignUp = State(initialValue: startInSignUp)
     }
 
@@ -40,7 +35,6 @@ struct SessionGateSheet: View {
                 orDivider
                 socialAuthSection
                 toggleModeButton
-                notNowButton
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 28)
@@ -105,7 +99,7 @@ struct SessionGateSheet: View {
     private var emailPasswordSection: some View {
         VStack(spacing: 12) {
             inputField(label: "Email") {
-                TextField("you@example.com", text: $email)
+                TextField("Email", text: $email)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .textInputAutocapitalization(.never)
@@ -201,19 +195,6 @@ struct SessionGateSheet: View {
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
-    private var notNowButton: some View {
-        if showNotNow {
-            Button("Not now") {
-                dismiss()
-            }
-            .font(.body)
-            .foregroundStyle(AppTheme.bodyMuted)
-            .buttonStyle(.plain)
-            .padding(.top, 4)
-        }
-    }
-
     // MARK: - Auth handlers
 
     private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
@@ -267,8 +248,8 @@ struct SessionGateSheet: View {
 
     private func handleGoogleSignIn() {
         // Values from GoogleService-Info.plist
-        let clientID = "535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii.apps.googleusercontent.com"
-        let callbackScheme = "com.googleusercontent.apps.535943965628-o2625sm9j32gvotvhsn4ipm1jl6e32ii"
+        let clientID = "724373166676-5o4tiei3c3jdpsbbq5m8qisdpmaglkfc.apps.googleusercontent.com"
+        let callbackScheme = "com.googleusercontent.apps.724373166676-5o4tiei3c3jdpsbbq5m8qisdpmaglkfc"
         let redirectURI = "\(callbackScheme):/"
 
         let verifier = makePKCEVerifier()
@@ -430,5 +411,5 @@ private final class GooglePresentationContext: NSObject, ASWebAuthenticationPres
 }
 
 #Preview("Sign up") {
-    SessionGateSheet(onAuthenticated: {}, startInSignUp: true, showNotNow: false)
+    SessionGateSheet(onAuthenticated: {}, startInSignUp: true)
 }
