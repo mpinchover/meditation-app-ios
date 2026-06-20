@@ -29,9 +29,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		FB173F3F2F6F58AA004102AA /* meditation-app-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "callysto-meditation.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB173F4D2F6F58AB004102AA /* meditation-app-iosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "callysto-meditationTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB173F572F6F58AB004102AA /* meditation-app-iosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "callysto-meditationUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB173F3F2F6F58AA004102AA /* callysto-meditation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "callysto-meditation.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB173F4D2F6F58AB004102AA /* callysto-meditationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "callysto-meditationTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB173F572F6F58AB004102AA /* callysto-meditationUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "callysto-meditationUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -92,9 +92,9 @@
 		FB173F402F6F58AA004102AA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FB173F3F2F6F58AA004102AA /* meditation-app-ios.app */,
-				FB173F4D2F6F58AB004102AA /* meditation-app-iosTests.xctest */,
-				FB173F572F6F58AB004102AA /* meditation-app-iosUITests.xctest */,
+				FB173F3F2F6F58AA004102AA /* callysto-meditation.app */,
+				FB173F4D2F6F58AB004102AA /* callysto-meditationTests.xctest */,
+				FB173F572F6F58AB004102AA /* callysto-meditationUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,9 +102,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FB173F3E2F6F58AA004102AA /* meditation-app-ios */ = {
+		FB173F3E2F6F58AA004102AA /* callysto-meditation */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FB173F612F6F58AB004102AA /* Build configuration list for PBXNativeTarget "meditation-app-ios" */;
+			buildConfigurationList = FB173F612F6F58AB004102AA /* Build configuration list for PBXNativeTarget "callysto-meditation" */;
 			buildPhases = (
 				FB173F3B2F6F58AA004102AA /* Sources */,
 				FB173F3C2F6F58AA004102AA /* Frameworks */,
@@ -124,12 +124,12 @@
 				FB8744732FDE22DC008904E1 /* FirebaseCore */,
 			);
 			productName = "callysto-meditation";
-			productReference = FB173F3F2F6F58AA004102AA /* meditation-app-ios.app */;
+			productReference = FB173F3F2F6F58AA004102AA /* callysto-meditation.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FB173F4C2F6F58AB004102AA /* meditation-app-iosTests */ = {
+		FB173F4C2F6F58AB004102AA /* callysto-meditationTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FB173F642F6F58AB004102AA /* Build configuration list for PBXNativeTarget "meditation-app-iosTests" */;
+			buildConfigurationList = FB173F642F6F58AB004102AA /* Build configuration list for PBXNativeTarget "callysto-meditationTests" */;
 			buildPhases = (
 				FB173F492F6F58AB004102AA /* Sources */,
 				FB173F4A2F6F58AB004102AA /* Frameworks */,
@@ -147,12 +147,12 @@
 			packageProductDependencies = (
 			);
 			productName = "callysto-meditationTests";
-			productReference = FB173F4D2F6F58AB004102AA /* meditation-app-iosTests.xctest */;
+			productReference = FB173F4D2F6F58AB004102AA /* callysto-meditationTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FB173F562F6F58AB004102AA /* meditation-app-iosUITests */ = {
+		FB173F562F6F58AB004102AA /* callysto-meditationUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FB173F672F6F58AB004102AA /* Build configuration list for PBXNativeTarget "meditation-app-iosUITests" */;
+			buildConfigurationList = FB173F672F6F58AB004102AA /* Build configuration list for PBXNativeTarget "callysto-meditationUITests" */;
 			buildPhases = (
 				FB173F532F6F58AB004102AA /* Sources */,
 				FB173F542F6F58AB004102AA /* Frameworks */,
@@ -170,7 +170,7 @@
 			packageProductDependencies = (
 			);
 			productName = "callysto-meditationUITests";
-			productReference = FB173F572F6F58AB004102AA /* meditation-app-iosUITests.xctest */;
+			productReference = FB173F572F6F58AB004102AA /* callysto-meditationUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -213,9 +213,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FB173F3E2F6F58AA004102AA /* meditation-app-ios */,
-				FB173F4C2F6F58AB004102AA /* meditation-app-iosTests */,
-				FB173F562F6F58AB004102AA /* meditation-app-iosUITests */,
+				FB173F3E2F6F58AA004102AA /* callysto-meditation */,
+				FB173F4C2F6F58AB004102AA /* callysto-meditationTests */,
+				FB173F562F6F58AB004102AA /* callysto-meditationUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -295,12 +295,12 @@
 /* Begin PBXTargetDependency section */
 		FB173F4F2F6F58AB004102AA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FB173F3E2F6F58AA004102AA /* meditation-app-ios */;
+			target = FB173F3E2F6F58AA004102AA /* callysto-meditation */;
 			targetProxy = FB173F4E2F6F58AB004102AA /* PBXContainerItemProxy */;
 		};
 		FB173F592F6F58AB004102AA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FB173F3E2F6F58AA004102AA /* meditation-app-ios */;
+			target = FB173F3E2F6F58AA004102AA /* callysto-meditation */;
 			targetProxy = FB173F582F6F58AB004102AA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -618,7 +618,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FB173F612F6F58AB004102AA /* Build configuration list for PBXNativeTarget "meditation-app-ios" */ = {
+		FB173F612F6F58AB004102AA /* Build configuration list for PBXNativeTarget "callysto-meditation" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB173F622F6F58AB004102AA /* Debug */,
@@ -627,7 +627,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FB173F642F6F58AB004102AA /* Build configuration list for PBXNativeTarget "meditation-app-iosTests" */ = {
+		FB173F642F6F58AB004102AA /* Build configuration list for PBXNativeTarget "callysto-meditationTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB173F652F6F58AB004102AA /* Debug */,
@@ -636,7 +636,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FB173F672F6F58AB004102AA /* Build configuration list for PBXNativeTarget "meditation-app-iosUITests" */ = {
+		FB173F672F6F58AB004102AA /* Build configuration list for PBXNativeTarget "callysto-meditationUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB173F682F6F58AB004102AA /* Debug */,
