@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>724373166676-5o4tiei3c3jdpsbbq5m8qisdpmaglkfc.apps.googleusercontent.com</string>
+	<string>724373166676-uj92dm0oktd1jojnihub01od3geitgno.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.724373166676-5o4tiei3c3jdpsbbq5m8qisdpmaglkfc</string>
+	<string>com.googleusercontent.apps.724373166676-uj92dm0oktd1jojnihub01od3geitgno</string>
 	<key>API_KEY</key>
 	<string>AIzaSyA91al_gKK96JC7OLyrQ0PYG9XUqm5f9jU</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>callysto</string>
+	<string>com.callysto.meditation</string>
 	<key>PROJECT_ID</key>
 	<string>callysto-6286f</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:724373166676:ios:59d66c2e2c22cfa2e4abc1</string>
+	<string>1:724373166676:ios:ea94e1d6d5d35a75e4abc1</string>
 </dict>
 </plist>

@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import MediaPlayer
 import SwiftUI
 #if os(iOS)
 import UIKit
@@ -51,17 +52,22 @@ final class SoundscapePlayer: ObservableObject {
     private var resumeB = false
     private var sessionCountdownEndDate: Date?
     private var interruptionObserver: NSObjectProtocol?
+    private var engineConfigObserver: NSObjectProtocol?
 
     init() {
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
         configureAudioSessionForPlayback()
         registerForAudioSessionNotifications()
+        setupRemoteCommandCenter()
 #endif
     }
 
     deinit {
         if let interruptionObserver {
             NotificationCenter.default.removeObserver(interruptionObserver)
+        }
+        if let engineConfigObserver {
+            NotificationCenter.default.removeObserver(engineConfigObserver)
         }
         if sessionActive {
             setKeepsScreenAwake(false)
@@ -155,6 +161,7 @@ final class SoundscapePlayer: ObservableObject {
         setKeepsScreenAwake(false)
         isPlaying = false
         countdownFinished = false
+        clearNowPlayingInfo()
     }
 
     private func handleNodeFinished(slot: PlayerSlot) {
@@ -261,6 +268,7 @@ final class SoundscapePlayer: ObservableObject {
         isPlaying = true
 
         startSessionCountdownTimer()
+        updateNowPlayingInfo()
         onSessionStarted?()
 
         // If a soundscape is selected, start audio playback. If not, the countdown still runs (bells still fire).
@@ -343,6 +351,7 @@ final class SoundscapePlayer: ObservableObject {
         stopSessionCountdownTimer()
         syncCountdownFromWallClock()
         isPlaying = false
+        updateNowPlayingInfo()
     }
 
     private func resumeFromPause() {
@@ -353,6 +362,7 @@ final class SoundscapePlayer: ObservableObject {
 
         // Resume the session countdown even if there is no soundscape selected.
         isPlaying = true
+        updateNowPlayingInfo()
         if resumeA || resumeB {
             startPolling()
         }
@@ -393,6 +403,7 @@ final class SoundscapePlayer: ObservableObject {
 
         if remaining != previous {
             onCountdownTick?(remaining, sessionTotalSeconds)
+            updateNowPlayingInfo()
         }
 
         if remaining <= 0 {
@@ -458,6 +469,58 @@ final class SoundscapePlayer: ObservableObject {
         ) { [weak self] notification in
             self?.handleAudioSessionInterruption(notification)
         }
+
+        engineConfigObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleEngineConfigurationChange()
+        }
+    }
+
+    private func handleEngineConfigurationChange() {
+        guard sessionActive, isPlaying, soundscapeURL != nil else { return }
+        let savedEndDate = sessionCountdownEndDate
+        tearDownEngine()
+        // Restore the countdown that tearDownEngine cancelled.
+        sessionCountdownEndDate = savedEndDate
+        if !countdownFinished, savedEndDate != nil {
+            startSessionCountdownTimer()
+        }
+        configureAudioSessionForPlayback()
+        ensureEngine()
+        guard let eng = engine, nodeA != nil, nodeB != nil else { return }
+        do {
+            try eng.start()
+        } catch { return }
+        scheduleFullFile(on: .a) { [weak self] in
+            self?.handleNodeFinished(slot: .a)
+        }
+        scheduleCrossfade(from: .a, to: .b)
+        startPolling()
+    }
+
+    private func setupRemoteCommandCenter() {
+        let center = MPRemoteCommandCenter.shared()
+        center.playCommand.isEnabled = true
+        center.pauseCommand.isEnabled = true
+        center.stopCommand.isEnabled = true
+        center.playCommand.addTarget { [weak self] _ in
+            guard let self, self.sessionActive, !self.isPlaying else { return .commandFailed }
+            self.resumeSession()
+            return .success
+        }
+        center.pauseCommand.addTarget { [weak self] _ in
+            guard let self, self.sessionActive, self.isPlaying else { return .commandFailed }
+            self.pauseSession()
+            return .success
+        }
+        center.stopCommand.addTarget { [weak self] _ in
+            guard let self, self.sessionActive else { return .commandFailed }
+            self.finish()
+            return .success
+        }
     }
 
     private func handleAudioSessionInterruption(_ notification: Notification) {
@@ -489,5 +552,29 @@ final class SoundscapePlayer: ObservableObject {
     }
 #else
     private func setKeepsScreenAwake(_ keepsAwake: Bool) {}
+#endif
+
+#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+    private func updateNowPlayingInfo() {
+        guard sessionActive else {
+            clearNowPlayingInfo()
+            return
+        }
+        let elapsed = Double(sessionTotalSeconds - sessionRemainingSeconds)
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+            MPMediaItemPropertyTitle: "Meditation Session",
+            MPNowPlayingInfoPropertyIsLiveStream: false,
+            MPMediaItemPropertyPlaybackDuration: Double(sessionTotalSeconds),
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: elapsed,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
+        ]
+    }
+
+    private func clearNowPlayingInfo() {
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+#else
+    private func updateNowPlayingInfo() {}
+    private func clearNowPlayingInfo() {}
 #endif
 }
